@@ -111,24 +111,24 @@ void hostToManSend(managerLink * manLink, char reply[]);
  */
 void hostTransmitPacket(hostState * hstate, char word[], char replymsg[])
 {
-char dest[1000];
-int  dstaddr;
+    char dest[1000];
+    int  dstaddr;
 
-/* Get the destination address from the manager's command message (word[]) */ 
-findWord(dest, word, 2);
-dstaddr = ascii2Int(dest);
+    /* Get the destination address from the manager's command message (word[]) */ 
+    findWord(dest, word, 2);
+    dstaddr = ascii2Int(dest);
 
-/* 
- * Set up the send packet buffer's source and destination addresses
- */
-hstate->sendPacketBuff.dstaddr = dstaddr;
-hstate->sendPacketBuff.srcaddr = hstate->netaddr;
+    /* 
+     * Set up the send packet buffer's source and destination addresses
+     */
+    hstate->sendPacketBuff.dstaddr = dstaddr;
+    hstate->sendPacketBuff.srcaddr = hstate->netaddr;
 
-/* Transmit the packet on the link */
-linkSend(&(hstate->linkout), &(hstate->sendPacketBuff));
+    /* Transmit the packet on the link */
+    linkSend(&(hstate->linkout), &(hstate->sendPacketBuff));
 
-/* Message to be sent back to the manager */
-strcpy(replymsg,"Packet sent");
+    /* Message to be sent back to the manager */
+    strcpy(replymsg,"Packet sent");
 }
 
 
@@ -148,73 +148,88 @@ strcpy(replymsg,"Packet sent");
  */
 void hostMain(hostState * hstate)
 {
-char buffer[1000]; /* The message from the manager */
-char word[1000];
-int  value;
-char replymsg[1000];   /* Reply message to be displayed at the manager */
-packetBuffer tmpbuff;
+    char buffer[1000]; /* The message from the manager */
+    char word[1000];
+    int  value;
+    char replymsg[1000];   /* Reply message to be displayed at the manager */
+    packetBuffer tmpbuff;
 
-while(1) {
+    while(1)
+    {
+        /* Check if there is a command message from the manager */
+        int length; /* Size of string in pipe */
+        length = hostCommandReceive(&(hstate->manLink),buffer);
 
-   /* Check if there is a command message from the manager */
-   int length; /* Size of string in pipe */
-   length = hostCommandReceive(&(hstate->manLink),buffer);
+        if (length > 1)
+        { /* Execute the manager's command */
+            findWord(word, buffer, 1);
 
-   if (length > 1) { /* Execute the manager's command */
-      findWord(word, buffer, 1);
-      if (strcmp(word, "SetNetAddr")==0) {
-         findWord(word, buffer, 2); /* Find net address */
-         value = ascii2Int(word);   /* Convert it to integer */
-         hostSetNetAddr(hstate, value, replymsg);
-         hostReplySend(&(hstate->manLink),"DISPLAY",replymsg);
-      }
-      else if (strcmp(word, "SetMainDir")==0) {
-         findWord(word, buffer, 2); /* Find directory name */
-         hostSetMainDir(hstate, word, replymsg);
-         hostReplySend(&(hstate->manLink),"DISPLAY",replymsg);
-      }
-      else if (strcmp(word, "ClearRcvFlg")==0) {
-         hostClearRcvFlg(hstate, replymsg);
-         hostReplySend(&(hstate->manLink),"DISPLAY",replymsg);
-      }
-      else if (strcmp(word, "UploadPacket")==0) {
-         findWord(word, buffer, 2); /* Find file name */
-         hostUploadPacket(hstate, word, replymsg); 
-         hostReplySend(&(hstate->manLink), "DISPLAY",replymsg);
-      }
-      else if (strcmp(word, "DownloadPacket")==0) {
-         findWord(word, buffer, 2); /* Find file name */
-         hostDownloadPacket(hstate, word, replymsg);
-         hostReplySend(&(hstate->manLink), "DISPLAY",replymsg);
-      }
-      else if (strcmp(word, "GetHostState")==0) {
-         hostGetHostState(hstate, &(hstate->manLink), replymsg);
-         hostReplySend(&(hstate->manLink), "GetHostStateAck",replymsg);
-      }
-      else if (strcmp(word, "TransmitPacket")==0) {
-         hostTransmitPacket(hstate, buffer, replymsg);
-         hostReplySend(&(hstate->manLink), "DISPLAY", replymsg);
-      }
-   } /* end of if */
+            if (strcmp(word, "SetNetAddr")==0) 
+            {
+                findWord(word, buffer, 2); /* Find net address */
+                value = ascii2Int(word);   /* Convert it to integer */
+                hostSetNetAddr(hstate, value, replymsg);
+                hostReplySend(&(hstate->manLink),"DISPLAY",replymsg);
+            }
 
-   /* Check if there is an incoming packet */
-   linkReceive(&(hstate->linkin), &tmpbuff);
+            else if (strcmp(word, "SetMainDir")==0)
+            {
+                findWord(word, buffer, 2); /* Find directory name */
+                hostSetMainDir(hstate, word, replymsg);
+                hostReplySend(&(hstate->manLink),"DISPLAY",replymsg);
+            }
+            else if (strcmp(word, "ClearRcvFlg")==0) 
+            {
+                hostClearRcvFlg(hstate, replymsg);
+                hostReplySend(&(hstate->manLink),"DISPLAY",replymsg);
+            }
 
-   /* 
-    * If there is a packet and if the packet's destination address 
-    * is the host's network address then store the packet in the
-    * receive packet buffer
-    */
-   if (tmpbuff.dstaddr == hstate->netaddr && tmpbuff.valid == 1 && tmpbuff.new == 1) {
-      hstate->rcvPacketBuff = tmpbuff;
-      hstate->rcvPacketBuff.new = 1;
-      hstate->rcvPacketBuff.valid = 1;
-   }
+            else if (strcmp(word, "UploadPacket")==0) 
+            {
+                findWord(word, buffer, 2); /* Find file name */
+                hostUploadPacket(hstate, word, replymsg); 
+                hostReplySend(&(hstate->manLink), "DISPLAY",replymsg);
+            }
 
-   /* The host goes to sleep for 10 ms */
-   usleep(TENMILLISEC);
+            else if (strcmp(word, "DownloadPacket")==0) 
+            {
+                findWord(word, buffer, 2); /* Find file name */
+                hostDownloadPacket(hstate, word, replymsg);
+                hostReplySend(&(hstate->manLink), "DISPLAY",replymsg);
+            }
 
-} /* End of while loop */
+            else if (strcmp(word, "GetHostState")==0)
+            {
+                hostGetHostState(hstate, &(hstate->manLink), replymsg);
+                hostReplySend(&(hstate->manLink), "GetHostStateAck",replymsg);
+            }
+
+            else if (strcmp(word, "TransmitPacket")==0) 
+            {
+                hostTransmitPacket(hstate, buffer, replymsg);
+                hostReplySend(&(hstate->manLink), "DISPLAY", replymsg);
+            }
+        } /* end of if */
+
+        /* Check if there is an incoming packet */
+        linkReceive(&(hstate->linkin), &tmpbuff);
+
+        /* 
+         * If there is a packet and if the packet's destination address 
+         * is the host's network address then store the packet in the
+         * receive packet buffer
+         */
+        if (tmpbuff.dstaddr == hstate->netaddr && tmpbuff.valid == 1 && tmpbuff.new == 1)
+        {
+            hstate->rcvPacketBuff = tmpbuff;
+            hstate->rcvPacketBuff.new = 1;
+            hstate->rcvPacketBuff.valid = 1;
+        }
+
+        /* The host goes to sleep for 10 ms */
+        usleep(TENMILLISEC);
+
+    } /* End of while loop */
 
 }
 
@@ -224,8 +239,8 @@ while(1) {
  */
 void hostSetNetAddr(hostState * hstate, int netaddr, char replymsg[])
 {
-hstate->netaddr = netaddr;
-strcpy(replymsg, "Network address is set");
+    hstate->netaddr = netaddr;
+    strcpy(replymsg, "Network address is set");
 }
 
 /* 
@@ -236,10 +251,10 @@ strcpy(replymsg, "Network address is set");
 
 int hostCommandReceive(managerLink * manLink, char command[])
 {
-int n;
-n = read(manLink->toHost[PIPEREAD],command,250);
-command[n] = '\0';
-return n+1;
+    int n;
+    n = read(manLink->toHost[PIPEREAD],command,250);
+    command[n] = '\0';
+    return n+1;
 }
 
 /* 
@@ -247,7 +262,7 @@ return n+1;
  */
 void hostToManSend(managerLink * manLink, char reply[])
 {
-write(manLink->fromHost[PIPEWRITE],reply,strlen(reply));
+    write(manLink->fromHost[PIPEWRITE],reply,strlen(reply));
 }
 
 /* 
@@ -262,12 +277,12 @@ write(manLink->fromHost[PIPEWRITE],reply,strlen(reply));
  */ 
 void hostReplySend(managerLink * manLink, char replytype[], char replymsg[])
 {
-char reply[1000];
+    char reply[1000];
 
-reply[0] = '\0';
-appendWithSpace(reply, replytype);
-appendWithSpace(reply, replymsg);
-hostToManSend(manLink, reply);
+    reply[0] = '\0';
+    appendWithSpace(reply, replytype);
+    appendWithSpace(reply, replymsg);
+    hostToManSend(manLink, reply);
 }
 
 /* 
@@ -276,11 +291,11 @@ hostToManSend(manLink, reply);
 void hostInit(hostState * hstate, int physid)
 {
 
-hostInitState(hstate, physid);     /* Initialize host's state */
+    hostInitState(hstate, physid);     /* Initialize host's state */
 
-/* Initialize the receive and send packet buffers */
-hostInitRcvPacketBuff(&(hstate->rcvPacketBuff));  
-hostInitSendPacketBuff(&(hstate->rcvPacketBuff)); 
+    /* Initialize the receive and send packet buffers */
+    hostInitRcvPacketBuff(&(hstate->rcvPacketBuff));  
+    hostInitSendPacketBuff(&(hstate->rcvPacketBuff)); 
 }
 
 /* 
@@ -288,8 +303,8 @@ hostInitSendPacketBuff(&(hstate->rcvPacketBuff));
  */
 void hostInitSendPacketBuff(packetBuffer * packetbuff)
 {
-packetbuff->valid = 0;
-packetbuff->new = 0;
+    packetbuff->valid = 0;
+    packetbuff->new = 0;
 }
 
 
@@ -298,60 +313,66 @@ packetbuff->new = 0;
  */
 void hostUploadPacket(hostState * hstate, char fname[], char replymsg[]) 
 {
-char c;
-FILE * fp;
-char path[MAXBUFFER];  /* Path to the file */
-char tempbuff[MAXBUFFER]; /* A temporary buffer */
-int length;
-int i;
+    char c;
+    FILE * fp;
+    char path[MAXBUFFER];  /* Path to the file */
+    char tempbuff[MAXBUFFER]; /* A temporary buffer */
+    int length;
+    int i;
 
-/* 
- * Upload the file into tempbuff 
- */
+    /* 
+     * Upload the file into tempbuff 
+     */
 
-if (hstate->maindirvalid == 0) {
-   strcpy(replymsg, "Upload aborted:  the host's main directory is not yet chosen");
-   return;
-}
+    if (hstate->maindirvalid == 0) 
+    {
+        strcpy(replymsg, "Upload aborted:  the host's main directory is not yet chosen");
+        return;
+    }
 
-/* Create a path to the file and then open it */
-strcpy(path,"");
-strcat(path, hstate->maindir);
-strcat(path, "/");
-strcat(path, fname);
+    /* Create a path to the file and then open it */
+    strcpy(path,"");
+    strcat(path, hstate->maindir);
+    strcat(path, "/");
+    strcat(path, fname);
 
-fp = fopen(path,"rb"); 
-if (fp == NULL) { /* file didn't open */
-   strcpy(replymsg, "Upload aborted: the file didn't open");
-   return;
-}
+    fp = fopen(path,"rb"); 
+    if (fp == NULL) 
+    { /* file didn't open */
+        strcpy(replymsg, "Upload aborted: the file didn't open");
+        return;
+    }
 
-length = fread(tempbuff, 1, PAYLOAD_LENGTH+1, fp);
+    length = fread(tempbuff, 1, PAYLOAD_LENGTH+1, fp);
 
-if (length==0) {
-   strcpy(replymsg, "Upload aborted: error in reading the file");
-   return;
-}
-else if (length > PAYLOAD_LENGTH) {
-   strcpy(replymsg, "Upload aborted: file is too big");
-   return;
-}
+    if (length==0) 
+    {
+        strcpy(replymsg, "Upload aborted: error in reading the file");
+        return;
+    }
 
-tempbuff[length] = '\0';
+    else if (length > PAYLOAD_LENGTH)
+    {
+        strcpy(replymsg, "Upload aborted: file is too big");
+        return;
+    }
 
-/* Fill in send packet buffer */
+    tempbuff[length] = '\0';
 
-hstate->sendPacketBuff.valid=1;
-hstate->sendPacketBuff.length=length;
+    /* Fill in send packet buffer */
 
-for (i=0; i<length; i++) { /* Store tempbuff in payload of packet buffer */
-   hstate->sendPacketBuff.payload[i] = tempbuff[i];
-}
+    hstate->sendPacketBuff.valid=1;
+    hstate->sendPacketBuff.length=length;
 
-/* Message to the manager */
-strcpy(replymsg, "Upload successful");
+    for (i=0; i<length; i++)
+    { /* Store tempbuff in payload of packet buffer */
+        hstate->sendPacketBuff.payload[i] = tempbuff[i];
+    }
 
-fclose(fp);
+    /* Message to the manager */
+    strcpy(replymsg, "Upload successful");
+
+    fclose(fp);
 }
 
 /* 
@@ -360,8 +381,8 @@ fclose(fp);
 
 void hostInitRcvPacketBuff(packetBuffer * packetbuff)
 {
-packetbuff->valid = 0;
-packetbuff->new = 0;
+    packetbuff->valid = 0;
+    packetbuff->new = 0;
 }
 
 /*
@@ -371,38 +392,41 @@ packetbuff->new = 0;
 
 void hostDownloadPacket(hostState * hstate, char fname[], char replymsg[]) 
 {
-char c;
-FILE * fp;
-char path[MAXBUFFER];  /* Path to the file */
+    char c;
+    FILE * fp;
+    char path[MAXBUFFER];  /* Path to the file */
 
-/* Create a path to the file and then open it */
+    /* Create a path to the file and then open it */
 
-if (hstate->rcvPacketBuff.valid == 0) {
-   strcpy(replymsg, "Download aborted: the receive packet buffer is empty");
-   return;
-}
+    if (hstate->rcvPacketBuff.valid == 0) 
+    {
+        strcpy(replymsg, "Download aborted: the receive packet buffer is empty");
+        return;
+    }
 
-if (hstate->maindirvalid == 0) {
-   strcpy(replymsg, "Download aborted: the host's main directory is not yet chosen");
-   return;
-}
+    if (hstate->maindirvalid == 0) 
+    {
+        strcpy(replymsg, "Download aborted: the host's main directory is not yet chosen");
+        return;
+    }
 
-strcpy(path,"");
-strcat(path, hstate->maindir);
-strcat(path, "/");
-strcat(path, fname);
-printf("host:  path to the file: %s\n",path);
-fp = fopen(path,"wb"); 
+    strcpy(path,"");
+    strcat(path, hstate->maindir);
+    strcat(path, "/");
+    strcat(path, fname);
+    printf("host:  path to the file: %s\n",path);
+    fp = fopen(path,"wb"); 
 
-/* Download the packet buffer payload into the file */
-if (hstate->rcvPacketBuff.new == 1) {
-   fwrite(hstate->rcvPacketBuff.payload,1,hstate->rcvPacketBuff.length,fp);
-   hstate->rcvPacketBuff.new=0;
-}
+    /* Download the packet buffer payload into the file */
+    if (hstate->rcvPacketBuff.new == 1) 
+    {
+        fwrite(hstate->rcvPacketBuff.payload,1,hstate->rcvPacketBuff.length,fp);
+        hstate->rcvPacketBuff.new=0;
+    }
 
-/* Message sent to the manager */
-strcpy(replymsg, "Download successful");
-fclose(fp);
+    /* Message sent to the manager */
+    strcpy(replymsg, "Download successful");
+    fclose(fp);
 } 
 
 /* 
@@ -410,12 +434,12 @@ fclose(fp);
  */
 void hostClearRcvFlg(hostState * hstate, char replymsg[])
 {
-hstate->rcvflag = 0;
-hstate->rcvPacketBuff.valid = 0;
-hstate->rcvPacketBuff.new = 0;
+    hstate->rcvflag = 0;
+    hstate->rcvPacketBuff.valid = 0;
+    hstate->rcvPacketBuff.new = 0;
 
-/* Message to the manager */
-strcpy(replymsg, "Host's packet received flag is cleared");
+    /* Message to the manager */
+    strcpy(replymsg, "Host's packet received flag is cleared");
 }
 
 /* 
@@ -424,11 +448,11 @@ strcpy(replymsg, "Host's packet received flag is cleared");
 
 void hostSetMainDir(hostState * hstate, char dirname[], char replymsg[])
 {
-strcpy(hstate->maindir, dirname);
-hstate->maindirvalid = 1;
+    strcpy(hstate->maindir, dirname);
+    hstate->maindirvalid = 1;
 
-/* Message to the manager */
-strcpy(replymsg, "Host's main directory name is changed");
+    /* Message to the manager */
+    strcpy(replymsg, "Host's main directory name is changed");
 }
 
 /*
@@ -443,33 +467,37 @@ strcpy(replymsg, "Host's main directory name is changed");
  */
 void hostGetHostState(hostState * hstate, managerLink * manLink, char replymsg[])
 {
-char word[1000];
-char empty[7] = "Empty";
+    char word[1000];
+    char empty[7] = "Empty";
 
-/* Create reply message */
+    /* Create reply message */
 
-replymsg[0] = '\0';  /* Clear reply message */
+    replymsg[0] = '\0';  /* Clear reply message */
 
-int2Ascii(word, hstate->physid);
-appendWithSpace(replymsg, word);
+    int2Ascii(word, hstate->physid);
+    appendWithSpace(replymsg, word);
 
-if (hstate->maindirvalid==0) appendWithSpace(replymsg, empty);
-else appendWithSpace(replymsg, hstate->maindir);
+    if (hstate->maindirvalid==0) appendWithSpace(replymsg, empty);
+    else appendWithSpace(replymsg, hstate->maindir);
 
-if (hstate->netaddr == EMPTY_ADDR) appendWithSpace(replymsg, empty);
-else {
-   int2Ascii(word, hstate->netaddr);
-   appendWithSpace(replymsg, word);
-}
+    if (hstate->netaddr == EMPTY_ADDR) appendWithSpace(replymsg, empty);
+    
+    else
+    {
+        int2Ascii(word, hstate->netaddr);
+        appendWithSpace(replymsg, word);
+    }
 
-if (hstate->nbraddr == EMPTY_ADDR) appendWithSpace(replymsg, empty);
-else {
-   int2Ascii(word, hstate->nbraddr);
-   appendWithSpace(replymsg, word);
-}
+    if (hstate->nbraddr == EMPTY_ADDR) appendWithSpace(replymsg, empty);
 
-int2Ascii(word, hstate->rcvPacketBuff.new);
-appendWithSpace(replymsg, word);
+    else
+    {
+        int2Ascii(word, hstate->nbraddr);
+        appendWithSpace(replymsg, word);
+    }
+
+    int2Ascii(word, hstate->rcvPacketBuff.new);
+    appendWithSpace(replymsg, word);
 
 }
 
@@ -478,12 +506,12 @@ appendWithSpace(replymsg, word);
  */
 void hostInitState(hostState * hstate, int physid)
 {
-hstate->physid = physid;
-hstate->maindirvalid = 0; /* main directory name is empty*/
-hstate->netaddr = physid; /* default address */  
-hstate->nbraddr = EMPTY_ADDR;  
-hstate->rcvPacketBuff.valid = 0;
-hstate->rcvPacketBuff.new = 0;
+    hstate->physid = physid;
+    hstate->maindirvalid = 0; /* main directory name is empty*/
+    hstate->netaddr = physid; /* default address */  
+    hstate->nbraddr = EMPTY_ADDR;  
+    hstate->rcvPacketBuff.valid = 0;
+    hstate->rcvPacketBuff.new = 0;
 }
 
 

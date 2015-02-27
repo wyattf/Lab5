@@ -41,7 +41,7 @@
 #include "host.h"
 
 #define EMPTY_ADDR  0xffff  /* Indicates that the empty address */
-                             /* It also indicates that the broadcast address */
+/* It also indicates that the broadcast address */
 #define MAXBUFFER 1000
 #define PIPEWRITE 1 
 #define PIPEREAD  0
@@ -52,32 +52,36 @@
  */
 void netCreateConnections(manLinkArrayType * manLinkArray) 
 {
-int i;
-int pflag;
+    int i;
+    int pflag;
 
-for (i=0; i<manLinkArray->numlinks; i++) {
-   if (pipe(manLinkArray->link[i].toHost) < 0) {
-      printf("Creating pipe failed\n");
-      return;
-   }
-   if (pipe(manLinkArray->link[i].fromHost) < 0) {
-      printf("Creating pipe failed\n");
-      return;
-   }
+    for (i=0; i<manLinkArray->numlinks; i++) 
+    {
+        if (pipe(manLinkArray->link[i].toHost) < 0)
+        {
+            printf("Creating pipe failed\n");
+            return;
+        }
 
-   /* Set the pipes to nonblocking */
-   pflag = fcntl(manLinkArray->link[i].toHost[0],F_GETFL);
-   fcntl(manLinkArray->link[i].toHost[0],F_SETFL, pflag | O_NONBLOCK);
+        if (pipe(manLinkArray->link[i].fromHost) < 0)
+        {
+            printf("Creating pipe failed\n");
+            return;
+        }
 
-   pflag = fcntl(manLinkArray->link[i].toHost[1],F_GETFL);
-   fcntl(manLinkArray->link[i].toHost[1],F_SETFL, pflag | O_NONBLOCK);
+        /* Set the pipes to nonblocking */
+        pflag = fcntl(manLinkArray->link[i].toHost[0],F_GETFL);
+        fcntl(manLinkArray->link[i].toHost[0],F_SETFL, pflag | O_NONBLOCK);
 
-   pflag = fcntl(manLinkArray->link[i].fromHost[0],F_GETFL);
-   fcntl(manLinkArray->link[i].fromHost[0],F_SETFL, pflag | O_NONBLOCK);
+        pflag = fcntl(manLinkArray->link[i].toHost[1],F_GETFL);
+        fcntl(manLinkArray->link[i].toHost[1],F_SETFL, pflag | O_NONBLOCK);
 
-   pflag = fcntl(manLinkArray->link[i].fromHost[1],F_GETFL);
-   fcntl(manLinkArray->link[i].fromHost[1],F_SETFL, pflag | O_NONBLOCK);
-}
+        pflag = fcntl(manLinkArray->link[i].fromHost[0],F_GETFL);
+        fcntl(manLinkArray->link[i].fromHost[0],F_SETFL, pflag | O_NONBLOCK);
+
+        pflag = fcntl(manLinkArray->link[i].fromHost[1],F_GETFL);
+        fcntl(manLinkArray->link[i].fromHost[1],F_SETFL, pflag | O_NONBLOCK);
+    }
 }
 
 /* 
@@ -86,14 +90,15 @@ for (i=0; i<manLinkArray->numlinks; i++) {
  */
 void netCreateLinks(linkArrayType * linkArray)
 { 
-int i;
+    int i;
 
-for (i=0; i<linkArray->numlinks; i++) { 
-   linkArray->link[i].linkID = i;
-   linkArray->link[i].linkType = UNIPIPE;
-   linkArray->link[i].uniPipeInfo.pipeType = NONBLOCKING;
-   linkCreate(&(linkArray->link[i]));
-}
+    for (i=0; i<linkArray->numlinks; i++)
+    { 
+        linkArray->link[i].linkID = i;
+        linkArray->link[i].linkType = UNIPIPE;
+        linkArray->link[i].uniPipeInfo.pipeType = NONBLOCKING;
+        linkCreate(&(linkArray->link[i]));
+    }
 }
 
 /* 
@@ -103,23 +108,24 @@ for (i=0; i<linkArray->numlinks; i++) {
  */
 void netCloseConnections(manLinkArrayType *  manLinkArray, int hostid)
 {
-int i;
+    int i;
 
-/* Close all connections not incident to the host */
-for (i=0; i<manLinkArray->numlinks; i++) {
-   if (i != hostid) { 
-      close(manLinkArray->link[i].toHost[0]);
-      close(manLinkArray->link[i].toHost[1]);
-      close(manLinkArray->link[i].fromHost[0]);
-      close(manLinkArray->link[i].fromHost[1]);
-   }
-}
+    /* Close all connections not incident to the host */
+    for (i=0; i<manLinkArray->numlinks; i++)
+    {
+        if (i != hostid) { 
+            close(manLinkArray->link[i].toHost[0]);
+            close(manLinkArray->link[i].toHost[1]);
+            close(manLinkArray->link[i].fromHost[0]);
+            close(manLinkArray->link[i].fromHost[1]);
+        }
+    }
 
-/* Close manager's side of the connection from host to manager */
-close(manLinkArray->link[hostid].fromHost[PIPEREAD]);
+    /* Close manager's side of the connection from host to manager */
+    close(manLinkArray->link[hostid].fromHost[PIPEREAD]);
 
-/* Close manager's side of the connection from manager to host */
-close(manLinkArray->link[hostid].toHost[PIPEWRITE]);
+    /* Close manager's side of the connection from manager to host */
+    close(manLinkArray->link[hostid].toHost[PIPEWRITE]);
 }
 
 /*
@@ -129,10 +135,10 @@ close(manLinkArray->link[hostid].toHost[PIPEWRITE]);
 
 void netSetNetworkTopology(linkArrayType * linkArray)
 {
-linkArray->link[0].uniPipeInfo.physIdSrc = 0;
-linkArray->link[0].uniPipeInfo.physIdDst = 1;
-linkArray->link[1].uniPipeInfo.physIdSrc = 1;
-linkArray->link[1].uniPipeInfo.physIdDst = 0;
+    linkArray->link[0].uniPipeInfo.physIdSrc = 0;
+    linkArray->link[0].uniPipeInfo.physIdDst = 1;
+    linkArray->link[1].uniPipeInfo.physIdSrc = 1;
+    linkArray->link[1].uniPipeInfo.physIdDst = 0;
 }
 
 /*
@@ -141,19 +147,21 @@ linkArray->link[1].uniPipeInfo.physIdDst = 0;
  */
 int netHostOutLink(linkArrayType * linkArray, int hostid) 
 {
-int i;
-int index;
+    int i;
+    int index;
 
-index = linkArray->numlinks;
+    index = linkArray->numlinks;
 
-for (i=0; i<linkArray->numlinks; i++) {
-   /* Store index if the outgoing link is found */
-   if (linkArray->link[i].uniPipeInfo.physIdSrc == hostid) 
-      index = i;
-}
-if (index == linkArray->numlinks) 
-   printf("Error:  Can't find outgoing link for host\n");
-return index; 
+    for (i=0; i<linkArray->numlinks; i++)
+    {
+        /* Store index if the outgoing link is found */
+        if (linkArray->link[i].uniPipeInfo.physIdSrc == hostid) 
+            index = i;
+    }
+    if (index == linkArray->numlinks) 
+        printf("Error:  Can't find outgoing link for host\n");
+
+    return index; 
 }
 
 /*
@@ -162,18 +170,21 @@ return index;
  */
 int netHostInLink(linkArrayType * linkArray, int hostid) 
 {
-int i;
-int index;
+    int i;
+    int index;
 
-index = linkArray->numlinks;
+    index = linkArray->numlinks;
 
-for (i=0; i<linkArray->numlinks; i++) {
-   /* Store index if the outgoing link is found */
-   if (linkArray->link[i].uniPipeInfo.physIdDst == hostid) index = i;
-}
-if (index == linkArray->numlinks) 
-   printf("Error:  Can't find outgoing link for host\n");
-return index; 
+    for (i=0; i<linkArray->numlinks; i++)
+    {
+        /* Store index if the outgoing link is found */
+        if (linkArray->link[i].uniPipeInfo.physIdDst == hostid) index = i;
+    }
+
+    if (index == linkArray->numlinks) 
+        printf("Error:  Can't find outgoing link for host\n");
+
+    return index; 
 }
 
 /*
@@ -181,35 +192,36 @@ return index;
  */
 void netCloseHostOtherLinks(linkArrayType * linkArray, int hostid)
 {
-int i;
+    int i;
 
-for (i=0; i<linkArray->numlinks; i++) {
-   if (linkArray->link[i].uniPipeInfo.physIdSrc != hostid) 
-      close(linkArray->link[i].uniPipeInfo.fd[PIPEWRITE]);
-   if (linkArray->link[i].uniPipeInfo.physIdDst != hostid) 
-      close(linkArray->link[i].uniPipeInfo.fd[PIPEREAD]);
-}
+    for (i=0; i<linkArray->numlinks; i++)
+    {
+        if (linkArray->link[i].uniPipeInfo.physIdSrc != hostid) 
+            close(linkArray->link[i].uniPipeInfo.fd[PIPEWRITE]);
+
+        if (linkArray->link[i].uniPipeInfo.physIdDst != hostid) 
+            close(linkArray->link[i].uniPipeInfo.fd[PIPEREAD]);
+    }
 }
 
 /* Close all links*/
 void netCloseLinks(linkArrayType * linkArray) 
 {
-int i;
+    int i;
 
-for (i=0; i<linkArray->numlinks; i++) 
-   linkClear(&(linkArray->link[i]));
+    for (i=0; i<linkArray->numlinks; i++) 
+        linkClear(&(linkArray->link[i]));
 }
 
 
 /* Close the host's side of a connection between a host and manager */
 void netCloseManConnections(manLinkArrayType * manLinkArray)
 {
-int i;
+    int i;
 
-for (i=0; i<manLinkArray->numlinks; i++) {
-   close(manLinkArray->link[i].toHost[PIPEREAD]);
-   close(manLinkArray->link[i].fromHost[PIPEWRITE]);
+    for (i=0; i<manLinkArray->numlinks; i++) 
+    {
+        close(manLinkArray->link[i].toHost[PIPEREAD]);
+        close(manLinkArray->link[i].fromHost[PIPEWRITE]);
+    }
 }
-}
-
-

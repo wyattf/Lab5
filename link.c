@@ -57,37 +57,45 @@
 /* Closes a link */
 int linkClear(LinkInfo * link)
 {
-int flag;
+    int flag;
 
-if (link->linkType == UNIPIPE) {
-   close(link->uniPipeInfo.fd[0]);
-   close(link->uniPipeInfo.fd[1]);
-}
+    if (link->linkType == UNIPIPE) 
+    {
+        close(link->uniPipeInfo.fd[0]);
+        close(link->uniPipeInfo.fd[1]);
+    }
 }
 
 /* Initializes a link */
 int linkCreate(LinkInfo * link)
 {
-int flag;
+    int flag;
 
-if (link->linkType == UNIPIPE) {
-   if (pipe(link->uniPipeInfo.fd) < 0) {
-      printf("Creating a pipe failed\n");
-      return -1;
-   }
-   if (link->uniPipeInfo.pipeType == NONBLOCKING) {
-      flag = fcntl(link->uniPipeInfo.fd[0], F_GETFL);
-      fcntl(link->uniPipeInfo.fd[0], F_SETFL, flag|O_NONBLOCK);
-      flag = fcntl(link->uniPipeInfo.fd[1], F_GETFL);
-      fcntl(link->uniPipeInfo.fd[1], F_SETFL, flag|O_NONBLOCK);
-   }
-   else printf("LinkCreate:  unknown unipipe type\n");
-   return 0;
-}
-else {
-   printf("Link not created:  invalid type\n");
-   return -1;
-}
+    if (link->linkType == UNIPIPE) 
+    {
+        if (pipe(link->uniPipeInfo.fd) < 0) 
+        {
+            printf("Creating a pipe failed\n");
+            return -1;
+        }
+
+        if (link->uniPipeInfo.pipeType == NONBLOCKING) 
+        {
+            flag = fcntl(link->uniPipeInfo.fd[0], F_GETFL);
+            fcntl(link->uniPipeInfo.fd[0], F_SETFL, flag|O_NONBLOCK);
+            flag = fcntl(link->uniPipeInfo.fd[1], F_GETFL);
+            fcntl(link->uniPipeInfo.fd[1], F_SETFL, flag|O_NONBLOCK);
+        }
+
+        else printf("LinkCreate:  unknown unipipe type\n");
+        return 0;
+    }
+
+    else
+    {
+        printf("Link not created:  invalid type\n");
+        return -1;
+    }
 }
 
 /*
@@ -96,67 +104,72 @@ else {
  */
 int linkReceive(LinkInfo * link, packetBuffer * pbuff)
 {
-int n;
-char buffer[1000];
-char word[1000];
-int count;
-int k;
-int wordptr;
-char lowbits;
-char highbits;
+    int n;
+    char buffer[1000];
+    char word[1000];
+    int count;
+    int k;
+    int wordptr;
+    char lowbits;
+    char highbits;
 
-n = 0;
+    n = 0;
 
-if (link->linkType==UNIPIPE) {
-   n = read(link->uniPipeInfo.fd[PIPEREAD], buffer, 1000);
-   if (n > 0) {
-      /* 
-       * Something is received on link. 
-       * Store it in the packet buffer
-       */
+    if (link->linkType==UNIPIPE) 
+    {
+        n = read(link->uniPipeInfo.fd[PIPEREAD], buffer, 1000);
+        if (n > 0) 
+        {
+            /* 
+             * Something is received on link. 
+             * Store it in the packet buffer
+             */
 
-      buffer[n] = '\0';
-   
-      findWord(word, buffer, 1); /* Destination address */
-      pbuff->dstaddr = ascii2Int(word);
-  
-      findWord(word, buffer, 2); /* Source address */
-      pbuff->srcaddr = ascii2Int(word);
+            buffer[n] = '\0';
 
-      findWord(word, buffer, 3); /* Length */
-      pbuff->length = ascii2Int(word);
+            findWord(word, buffer, 1); /* Destination address */
+            pbuff->dstaddr = ascii2Int(word);
 
-      findWord(word, buffer, 4); /* Payload */
+            findWord(word, buffer, 2); /* Source address */
+            pbuff->srcaddr = ascii2Int(word);
 
-      /* 
-       * We will transform the payload so that 
-       *
-       *  Each symbol 'a', 'b', ..., 'p' converts to the 
-       *  4-bits 0000, 0001,..., 1111
-       *  Each pair of symbols converts to a byte.
-       *  For example, 'ac' converts to 00000010
-       *  Note the first symbol is the high order bits
-       *  and the second symbol is the low order bits
-       */
+            findWord(word, buffer, 3); /* Length */
+            pbuff->length = ascii2Int(word);
 
-      for (k = 0; k < pbuff->length; k++){
-         highbits = word[2*k]-'a';  
-         lowbits = word[2*k+1]-'a';
-         highbits = highbits * 16; /* Shift to the left by 4 bits */
-         pbuff->payload[k] = highbits + lowbits;
-      } /* end of for */
-      pbuff->payload[k] = '\0';
-      pbuff->valid=1;
-      pbuff->new=1;
-   } /* end of if */
+            findWord(word, buffer, 4); /* Payload */
 
-   else { /* Not a packet */
-      pbuff->valid=0;
-      pbuff->new=0;
-   }
-}
+            /* 
+             * We will transform the payload so that 
+             *
+             *  Each symbol 'a', 'b', ..., 'p' converts to the 
+             *  4-bits 0000, 0001,..., 1111
+             *  Each pair of symbols converts to a byte.
+             *  For example, 'ac' converts to 00000010
+             *  Note the first symbol is the high order bits
+             *  and the second symbol is the low order bits
+             */
 
-return n; /* Return length what was received on the link */ 
+            for (k = 0; k < pbuff->length; k++)
+            {
+                highbits = word[2*k]-'a';  
+                lowbits = word[2*k+1]-'a';
+                highbits = highbits * 16; /* Shift to the left by 4 bits */
+                pbuff->payload[k] = highbits + lowbits;
+            } /* end of for */
+
+            pbuff->payload[k] = '\0';
+            pbuff->valid=1;
+            pbuff->new=1;
+        } /* end of if */
+
+        else 
+        { /* Not a packet */
+            pbuff->valid=0;
+            pbuff->new=0;
+        }
+    }
+
+    return n; /* Return length what was received on the link */ 
 }
 
 /*
@@ -164,76 +177,79 @@ return n; /* Return length what was received on the link */
  */
 int linkSend(LinkInfo * link, packetBuffer * pbuff)
 {
-char sendbuff[1000];  /* buffer to build the message */
-char word[1000];
-char newpayload[1000];
-int  count;
-int  sendbuffptr;
-int  newptr;
-int  k;
-char lowbits;
-char highbits;
+    char sendbuff[1000];  /* buffer to build the message */
+    char word[1000];
+    char newpayload[1000];
+    int  count;
+    int  sendbuffptr;
+    int  newptr;
+    int  k;
+    char lowbits;
+    char highbits;
 
-/* Check if this send should be aborted */
-if (pbuff->valid == 0) {
-   printf("packet invalid\n");
-   return -1;
-}
+    /* Check if this send should be aborted */
+    if (pbuff->valid == 0) 
+    {
+        printf("packet invalid\n");
+        return -1;
+    }
 
-if (pbuff->length > PAYLOAD_LENGTH) {
-   printf("packet too big\n");
-   return -1;
-} 
+    if (pbuff->length > PAYLOAD_LENGTH) 
+    {
+        printf("packet too big\n");
+        return -1;
+    } 
 
-if (pbuff->length <= 0) {
-   printf("packet too small\n");
-   return -1;
-}
+    if (pbuff->length <= 0) 
+    {
+        printf("packet too small\n");
+        return -1;
+    }
 
-sendbuff[0] = ' ';  /* Start message with a space */
-sendbuff[1] = '\0';
+    sendbuff[0] = ' ';  /* Start message with a space */
+    sendbuff[1] = '\0';
 
-int2Ascii(word, pbuff->dstaddr);  /* Append destination address */
-appendWithSpace(sendbuff, word);
+    int2Ascii(word, pbuff->dstaddr);  /* Append destination address */
+    appendWithSpace(sendbuff, word);
 
-int2Ascii(word, pbuff->srcaddr);  /* Append source address */
-appendWithSpace(sendbuff, word);
+    int2Ascii(word, pbuff->srcaddr);  /* Append source address */
+    appendWithSpace(sendbuff, word);
 
-int2Ascii(word, pbuff->length);  /* Append payload length */
-appendWithSpace(sendbuff, word);
+    int2Ascii(word, pbuff->length);  /* Append payload length */
+    appendWithSpace(sendbuff, word);
 
-/* 
- * We will transform the payload so that 
- * a byte will be converted into two
- * ASCII symbols, each symbol represents
- * four bits. The ASCII symbols are 
- * 'a', 'b', ..., 'p' representing
- * 0000, 0001, 0010, ..., 1111  
- * For example, the byte 00000010 will
- * be represented by 'ab'.  Note that
- * the first byte is the high order bits
- * and the second byte is the low order bits.
- */
+    /* 
+     * We will transform the payload so that 
+     * a byte will be converted into two
+     * ASCII symbols, each symbol represents
+     * four bits. The ASCII symbols are 
+     * 'a', 'b', ..., 'p' representing
+     * 0000, 0001, 0010, ..., 1111  
+     * For example, the byte 00000010 will
+     * be represented by 'ab'.  Note that
+     * the first byte is the high order bits
+     * and the second byte is the low order bits.
+     */
 
-for (k = 0; k < pbuff->length; k++) {
-   lowbits = pbuff->payload[k];
-   highbits = lowbits;
-   highbits = highbits/16; /* shift bits down by four bits */
-   highbits = highbits & 15; /* Mask out all bits except the last four */
-   lowbits = lowbits & 15;
-   newpayload[2*k] = highbits + 'a';
-   newpayload[2*k+1] = lowbits + 'a'; 
-}
+    for (k = 0; k < pbuff->length; k++) 
+    {
+        lowbits = pbuff->payload[k];
+        highbits = lowbits;
+        highbits = highbits/16; /* shift bits down by four bits */
+        highbits = highbits & 15; /* Mask out all bits except the last four */
+        lowbits = lowbits & 15;
+        newpayload[2*k] = highbits + 'a';
+        newpayload[2*k+1] = lowbits + 'a'; 
+    }
 
-newpayload[2*k] = '\0';
+    newpayload[2*k] = '\0';
 
-appendWithSpace(sendbuff, newpayload);
+    appendWithSpace(sendbuff, newpayload);
 
-if (link->linkType==UNIPIPE) {
-   write(link->uniPipeInfo.fd[PIPEWRITE],sendbuff,strlen(sendbuff)); 
-}
+    if (link->linkType==UNIPIPE) 
+        write(link->uniPipeInfo.fd[PIPEWRITE],sendbuff,strlen(sendbuff)); 
 
-/* Used for DEBUG -- trace packets being sent */
-printf("Link %d transmitted\n",link->linkID);
+    /* Used for DEBUG -- trace packets being sent */
+    printf("Link %d transmitted\n",link->linkID);
 }
 

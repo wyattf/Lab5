@@ -6,14 +6,15 @@
 
 main()
 {
-int i, k;
+    int i, k;
 
-for (i=0; i<10; i++) {
-   for (k=0; k<50; k++) {
-   usleep(TENMILLISEC);
-   }
-   printf("%d\n",i);
-}
+    for (i=0; i<10; i++) 
+    {
+        for (k=0; k<50; k++) 
+            usleep(TENMILLISEC);
+
+        printf("%d\n",i);
+    }
 
 
 }

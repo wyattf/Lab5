@@ -15,8 +15,8 @@
  */
 void appendWithSpace(char c1[], char c2[])
 {
-strcat(c1," ");
-strcat(c1,c2);
+    strcat(c1," ");
+    strcat(c1,c2);
 }
 
 
@@ -29,11 +29,12 @@ strcat(c1,c2);
 
 int asciiValue(char c)
 {
-int value;
+    int value;
 
-if (c < '0' || c > '9') return -1;
-value = c - '0';
-return value;
+    if (c < '0' || c > '9') return -1;
+
+    value = c - '0';
+    return value;
 }
 
 
@@ -44,28 +45,31 @@ return value;
 
 void int2Ascii(char c[], int value)
 {
-char reverse[MAXBUFFER]; /* String to store digits in the reverse order */
-int i, j, k;
-int remainder; 
+    char reverse[MAXBUFFER]; /* String to store digits in the reverse order */
+    int i, j, k;
+    int remainder; 
 
-if (value < 0) {
-   c[0] = '\0';  /* return empty character string */
-   printf("Error:  negative value passed to int2Ascii\n");
-   return;
-}
+    if (value < 0)
+    {
+        c[0] = '\0';  /* return empty character string */
+        printf("Error:  negative value passed to int2Ascii\n");
+        return;
+    }
 
-k = 0;
-remainder = value;
+    k = 0;
+    remainder = value;
 
-do { /* Compute last digit to the first */
-   reverse[k] = (remainder % 10) + '0';
-   remainder = remainder/10;
-   k++;
-} while(remainder > 0);
+    do
+    { /* Compute last digit to the first */
+        reverse[k] = (remainder % 10) + '0';
+        remainder = remainder/10;
+        k++;
+    } while(remainder > 0);
 
-/* copy the reverse of reverse[] into c[] */
-for (i=0; i<k; i++) c[i] = reverse[k-i-1];
-c[k] = '\0'; /* terminate c[] */
+    /* copy the reverse of reverse[] into c[] */
+    for (i=0; i<k; i++) c[i] = reverse[k-i-1];
+
+    c[k] = '\0'; /* terminate c[] */
 }
 
 /* 
@@ -76,25 +80,29 @@ c[k] = '\0'; /* terminate c[] */
 
 int ascii2Int(char c[]) 
 {
-int first, last; /* position of first and last digits */
-int value;       /* value of number */
+    int first, last; /* position of first and last digits */
+    int value;       /* value of number */
 
-/* Have first point to the first digit if it exists */
-first = 0;
-while (asciiValue(c[first]) == -1 && c[first] != '\0') first++;
-if (c[first] == '\0') return -1;
+    /* Have first point to the first digit if it exists */
+    first = 0;
+    while (asciiValue(c[first]) == -1 && c[first] != '\0') first++;
 
-/* Have last point to the last digit */
-last = first;
-while (asciiValue(c[last]) != -1 && c[last] != '\0') last++;
-last--; 
+    if (c[first] == '\0') return -1;
 
-/* Compute the value */
-value = 0;
-for(value = 0; first <= last; first++) 
-   value = 10* value + asciiValue(c[first]);
+    /* Have last point to the last digit */
+    last = first;
 
-return value;
+    while (asciiValue(c[last]) != -1 && c[last] != '\0') last++;
+
+    last--; 
+
+    /* Compute the value */
+    value = 0;
+
+    for(value = 0; first <= last; first++) 
+        value = 10* value + asciiValue(c[first]);
+
+    return value;
 }
 
 /* 
@@ -106,30 +114,29 @@ return value;
 
 int point2Word(char c[], int k)
 {
-int i;
-int count; /* counts number of words found */
+    int i;
+    int count; /* counts number of words found */
 
-count = 0;
-if (k<1) return -1; /* character string is empty */
+    count = 0;
+    if (k<1) return -1; /* character string is empty */
 
-for (i=0; c[i]==' '; i++); /* Skip over spaces */
+    for (i=0; c[i]==' '; i++); /* Skip over spaces */
 
-if (c[i] == '\0') return -1; /* String only has spaces */
-else count=1; /* i is pointing to a word */
+    if (c[i] == '\0') return -1; /* String only has spaces */
+    else count=1; /* i is pointing to a word */
 
-while (count < k) {
+    while (count < k) 
+    {
+        /* Find the next word */
+        for (; c[i] != ' ' && c[i] != '\0'; i++); /* skip over word */
+        if (c[i] == '\0') return -1; /* Not enough words in the string */
 
-   /* Find the next word */
-   for (; c[i] != ' ' && c[i] != '\0'; i++); /* skip over word */
-   if (c[i] == '\0') return -1; /* Not enough words in the string */
+        for (; c[i]==' '; i++); /* Skip over spaces */
+        if (c[i] == '\0') return -1; /* Didn't find another word */
+        else count++;           /* We reached another word, so increment count */
+    } 
 
-   for (; c[i]==' '; i++); /* Skip over spaces */
-   if (c[i] == '\0') return -1; /* Didn't find another word */
-   else count++;           /* We reached another word, so increment count */
-
-} 
-
-return i;
+    return i;
 }
 
 /*
@@ -141,14 +148,16 @@ return i;
 
 void copyWord(char word[], char c[], int k)
 {
-int i, j;
+    int i, j;
 
-i=0;
-for(j=k; c[j]!= '\0' && c[j]!=' '; j++) {
-   word[i] = c[j];
-   i++;
-}  
-word[i] = '\0';
+    i=0;
+    for(j=k; c[j]!= '\0' && c[j]!=' '; j++) 
+    {
+        word[i] = c[j];
+        i++;
+    }  
+
+    word[i] = '\0';
 }
 
 
@@ -161,13 +170,16 @@ word[i] = '\0';
 
 void findWord(char word[], char c[], int k)
 {
-int i;
+    int i;
 
-i = point2Word(c, k);
-if (i < 0) {
-   word[0] = '\0';
-   return;
-}
-copyWord(word, c, i);
+    i = point2Word(c, k);
+
+    if (i < 0) 
+    {
+        word[0] = '\0';
+        return;
+    }
+
+    copyWord(word, c, i);
 }
 
