@@ -164,7 +164,7 @@ void manDisplayReplyMsg(char replymsg[])
  */
 char manGetUserCommand(int chost)  /* Gets command from the user */
 {
-    char cmd;
+    char cmd, temp;
 
     while(1) 
     {
@@ -182,10 +182,23 @@ char manGetUserCommand(int chost)  /* Gets command from the user */
         printf("   (q) Quit\n");
         printf("   Enter Command: ");
 
-        do 
-        {
+        cmd = ' ';
+
+        /* Collect input and disregard leading white space */
+        while(cmd == ' ' || cmd == '\t' || cmd == '\n')
             cmd = getchar();
-        } while(cmd == ' ' || cmd == '\n'); /* get rid of junk from stdin */
+
+        /* Clear input buffer and invalidate input
+         * if there were multiple characters. */
+        temp = getchar();
+
+        while ( temp != '\n' )
+        {
+            if ( temp != ' ' && temp != '\n' && temp != '\t' )
+                cmd = 'x';
+
+            temp = getchar();
+        }
 
         /* Ensure that the command is valid */
         if (cmd == 'd') return cmd;
@@ -198,7 +211,7 @@ char manGetUserCommand(int chost)  /* Gets command from the user */
         else if (cmd == 'q') return cmd;
         else if (cmd == 'h') return cmd;
         else if (cmd == 'c') return cmd;
-        else printf("Invalid command, you entered %c\n", cmd);
+        else printf("Invalid command.\n");
         printf("\n");
     }
 }
