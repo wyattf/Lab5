@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <dirent.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -448,11 +449,22 @@ void hostClearRcvFlg(hostState * hstate, char replymsg[])
 
 void hostSetMainDir(hostState * hstate, char dirname[], char replymsg[])
 {
-    strcpy(hstate->maindir, dirname);
-    hstate->maindirvalid = 1;
+    DIR * dir = opendir(dirname);
 
-    /* Message to the manager */
-    strcpy(replymsg, "Host's main directory name is changed");
+    if ( dir == NULL )
+    {
+        strcpy(replymsg, "The provided directory name does not exist.");
+        closedir(dir);
+    }
+
+    else
+    {
+        strcpy(hstate->maindir, dirname);
+        hstate->maindirvalid = 1;
+
+        /* Message to the manager */
+        strcpy(replymsg, "Host's main directory name is changed");
+    }
 }
 
 /*
