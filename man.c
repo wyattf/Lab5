@@ -21,7 +21,7 @@
 
 #define NAME_LENGTH 100
 #define EMPTY_ADDR  10000  /* Indicates that the empty address */
-                             /* It also indicates that the broadcast address */
+/* It also indicates that the broadcast address */
 #define MAXBUFFER 1000
 #define PIPEWRITE 1 
 #define PIPEREAD  0
@@ -88,11 +88,11 @@ void manDisplayReplyMsg(char replymsg[]);
  */
 int manReplyReceive(managerLink * manLink, char reply[])
 {
-int n;
+    int n;
 
-n = read(manLink->fromHost[PIPEREAD],reply,250);
-reply[n] = '\0';
-return n+1;
+    n = read(manLink->fromHost[PIPEREAD],reply,250);
+    reply[n] = '\0';
+    return n+1;
 }
 
 /*
@@ -100,8 +100,8 @@ return n+1;
  */
 void manCommandSend(managerLink * manLink, char command[])
 {
-int i;
-i = write(manLink->toHost[PIPEWRITE],command,strlen(command));
+    int i;
+    i = write(manLink->toHost[PIPEWRITE],command,strlen(command));
 }
 
 /*
@@ -133,29 +133,30 @@ i = write(manLink->toHost[PIPEWRITE],command,strlen(command));
 
 void manWaitForReply(managerLink * manLink, int cmd)
 { 
-char reply[1000];
-char word[1000];
-int length;
+    char reply[1000];
+    char word[1000];
+    int length;
 
-do {
-   usleep(TENMILLISEC); /* Go to sleep for 10 milliseconds */
-   length = manReplyReceive(manLink, reply);
-   findWord(word, reply, 1);
-   if (strcmp(word, "DISPLAY")==0) manDisplayReplyMsg(reply);
-   else if (strcmp(word, "GetHostStateAck") == 0) manDisplayHostState(reply);
-} while(length <= 1);
+    do 
+    {
+        usleep(TENMILLISEC); /* Go to sleep for 10 milliseconds */
+        length = manReplyReceive(manLink, reply);
+        findWord(word, reply, 1);
+        if (strcmp(word, "DISPLAY")==0) manDisplayReplyMsg(reply);
+        else if (strcmp(word, "GetHostStateAck") == 0) manDisplayHostState(reply);
+    } while(length <= 1);
 }
 
 /* This displays the message after the first word on the user's console */
 void manDisplayReplyMsg(char replymsg[])
 {
-int i;
+    int i;
 
-/* prints from the second word onwards */
-i = point2Word(replymsg, 2);  
-for(; replymsg[i] != '\0'; i++) putchar(replymsg[i]); 
-putchar('\n');
-putchar('\n');
+    /* prints from the second word onwards */
+    i = point2Word(replymsg, 2);  
+    for(; replymsg[i] != '\0'; i++) putchar(replymsg[i]); 
+    putchar('\n');
+    putchar('\n');
 }
 
 /* 
@@ -163,40 +164,43 @@ putchar('\n');
  */
 char manGetUserCommand(int chost)  /* Gets command from the user */
 {
-char cmd;
+    char cmd;
 
-while(1) {
-   /* Display command options */
-   printf("Commands (Current host ID = %d):\n", chost);
-   printf("   (d) Display host's state\n");
-   printf("   (s) Set host's network address\n");
-   printf("   (m) Set host's main directory\n");
-   printf("   (f) Clear host's receive packet buffer\n");
-   printf("   (r) Download host's receive packet buffer into a file\n");
-   printf("   (u) Upload file into host's send packet buffer\n");
-   printf("   (t) Transmit packet from the host's send packet buffer\n");
-   printf("   (h) Display all hosts\n");
-   printf("   (c) Change host\n");
-   printf("   (q) Quit\n");
-   printf("   Enter Command: ");
-   do {
-      cmd = getchar();
-   } while(cmd == ' ' || cmd == '\n'); /* get rid of junk from stdin */
+    while(1) 
+    {
+        /* Display command options */
+        printf("Commands (Current host ID = %d):\n", chost);
+        printf("   (d) Display host's state\n");
+        printf("   (s) Set host's network address\n");
+        printf("   (m) Set host's main directory\n");
+        printf("   (f) Clear host's receive packet buffer\n");
+        printf("   (r) Download host's receive packet buffer into a file\n");
+        printf("   (u) Upload file into host's send packet buffer\n");
+        printf("   (t) Transmit packet from the host's send packet buffer\n");
+        printf("   (h) Display all hosts\n");
+        printf("   (c) Change host\n");
+        printf("   (q) Quit\n");
+        printf("   Enter Command: ");
 
-   /* Ensure that the command is valid */
-   if (cmd == 'd') return cmd;
-   else if (cmd == 's') return cmd;
-   else if (cmd == 'm') return cmd;
-   else if (cmd == 'f') return cmd;
-   else if (cmd == 'r') return cmd;
-   else if (cmd == 'u') return cmd;
-   else if (cmd == 't') return cmd;
-   else if (cmd == 'q') return cmd;
-   else if (cmd == 'h') return cmd;
-   else if (cmd == 'c') return cmd;
-   else printf("Invalid command, you entered %c\n", cmd);
-   printf("\n");
-}
+        do 
+        {
+            cmd = getchar();
+        } while(cmd == ' ' || cmd == '\n'); /* get rid of junk from stdin */
+
+        /* Ensure that the command is valid */
+        if (cmd == 'd') return cmd;
+        else if (cmd == 's') return cmd;
+        else if (cmd == 'm') return cmd;
+        else if (cmd == 'f') return cmd;
+        else if (cmd == 'r') return cmd;
+        else if (cmd == 'u') return cmd;
+        else if (cmd == 't') return cmd;
+        else if (cmd == 'q') return cmd;
+        else if (cmd == 'h') return cmd;
+        else if (cmd == 'c') return cmd;
+        else printf("Invalid command, you entered %c\n", cmd);
+        printf("\n");
+    }
 }
 
 /*
@@ -206,19 +210,19 @@ while(1) {
  */
 void manUploadPacket(managerLink * manLink)
 {
-char fname[MAXBUFFER]; /* File name. */
-char command[1000]; 
+    char fname[MAXBUFFER]; /* File name. */
+    char command[1000]; 
 
-printf("Enter the name of the file in the host's directory: ");
-scanf("%s",fname);
+    printf("Enter the name of the file in the host's directory: ");
+    scanf("%s",fname);
 
-/* Create a command to the host */
-command[0] = '\0'; /* Clear the command stringn */
-appendWithSpace(command, "UploadPacket");
-appendWithSpace(command, fname);
+    /* Create a command to the host */
+    command[0] = '\0'; /* Clear the command stringn */
+    appendWithSpace(command, "UploadPacket");
+    appendWithSpace(command, fname);
 
-/* Send command to host */
-manCommandSend(manLink, command);
+    /* Send command to host */
+    manCommandSend(manLink, command);
 } 
 
 /* 
@@ -230,32 +234,36 @@ manCommandSend(manLink, command);
 
 int manTransmitPacket(managerLink * manLink)
 {
-char command[1000];
-char word[1000];
-int netaddr;
+    char command[1000];
+    char word[1000];
+    int netaddr;
 
-/* As the user to enter the destination address */
-printf("Enter the destination's network address: ");
-scanf("%d", &netaddr);
-if (netaddr < 0) {
-   printf("Aborted: address should be positive\n");
-   return -1;
-}
-else if (netaddr > 10000) {
-   printf("The address too big.  Try again.\n");
-   return -1;
-}
+    /* As the user to enter the destination address */
+    printf("Enter the destination's network address: ");
+    scanf("%d", &netaddr);
 
-/* Create the command message */
-command[0] = '\0';                         /* Empty command string */
-appendWithSpace(command, "TransmitPacket"); 
+    if (netaddr < 0) 
+    {
+        printf("Aborted: address should be positive\n");
+        return -1;
+    }
 
-int2Ascii(word, netaddr);    /* Add destination address */
-appendWithSpace(command, word);  
+    else if (netaddr > 10000) 
+    {
+        printf("The address too big.  Try again.\n");
+        return -1;
+    }
 
-/* Send command */
-manCommandSend(manLink, command);  
-return 0;
+    /* Create the command message */
+    command[0] = '\0';                         /* Empty command string */
+    appendWithSpace(command, "TransmitPacket"); 
+
+    int2Ascii(word, netaddr);    /* Add destination address */
+    appendWithSpace(command, word);  
+
+    /* Send command */
+    manCommandSend(manLink, command);  
+    return 0;
 }
 
 /*
@@ -267,20 +275,20 @@ return 0;
 
 void manDownloadPacket(managerLink * manLink)
 {
-char fname[MAXBUFFER]; /* File name. */
-char command[1000];
+    char fname[MAXBUFFER]; /* File name. */
+    char command[1000];
 
-/* Enter file name */
-printf("Enter the file name: ");
-scanf("%s",fname);
+    /* Enter file name */
+    printf("Enter the file name: ");
+    scanf("%s",fname);
 
-/* Create a command to the host */
-command[0] = '\0'; /* Clear the command */
-appendWithSpace(command, "DownloadPacket");
-appendWithSpace(command, fname);
+    /* Create a command to the host */
+    command[0] = '\0'; /* Clear the command */
+    appendWithSpace(command, "DownloadPacket");
+    appendWithSpace(command, fname);
 
-/* Send command to the host. */
-manCommandSend(manLink, command);
+    /* Send command to the host. */
+    manCommandSend(manLink, command);
 }
 
 
@@ -291,11 +299,11 @@ manCommandSend(manLink, command);
 
 void manClearRcvFlg(managerLink * manLink)
 {
-char command[100];
+    char command[100];
 
-command[0] = '\0';    /* Empty the command string */
-appendWithSpace(command, "ClearRcvFlg"); /* Create command */
-manCommandSend(manLink, command); /* Send command to the host */
+    command[0] = '\0';    /* Empty the command string */
+    appendWithSpace(command, "ClearRcvFlg"); /* Create command */
+    manCommandSend(manLink, command); /* Send command to the host */
 }
 
 /*
@@ -306,20 +314,20 @@ manCommandSend(manLink, command); /* Send command to the host */
  */
 void manSetMainDir(managerLink * manLink)
 {
-char dirname[1000];
-char command[1000];
+    char dirname[1000];
+    char command[1000];
 
-/* Get the directory name */
-printf("Enter new directory: ");
-scanf("%s",dirname);
+    /* Get the directory name */
+    printf("Enter new directory: ");
+    scanf("%s",dirname);
 
-/* Create the command message */
-command[0] = '\0'; /* Initialize command to the empty string */
-appendWithSpace(command, "SetMainDir");
-appendWithSpace(command, dirname);
+    /* Create the command message */
+    command[0] = '\0'; /* Initialize command to the empty string */
+    appendWithSpace(command, "SetMainDir");
+    appendWithSpace(command, dirname);
 
-/* Send the command message */
-manCommandSend(manLink, command);
+    /* Send the command message */
+    manCommandSend(manLink, command);
 }
 
 
@@ -332,29 +340,28 @@ manCommandSend(manLink, command);
 
 void manSetNetAddr(managerLink * manLink)
 {
-int netaddr;
-char command[1000];
-char addr[1000]; 
+    int netaddr;
+    char command[1000];
+    char addr[1000]; 
 
-/* Ask user for the network address */
-while(1) {
-   printf("Enter network address: ");
-   scanf("%d",&netaddr);
-   if (netaddr <0)
-      printf("Address must be postive. Try again\n");
-   else if (netaddr > 10000)
-      printf("The address is too big. Try again\n");
-   else break;
-}
+    /* Ask user for the network address */
+    while(1) 
+    {
+        printf("Enter network address: ");
+        scanf("%d",&netaddr);
+        if (netaddr <0)  printf("Address must be postive. Try again\n");
+        else if (netaddr > 10000)  printf("The address is too big. Try again\n");
+        else break;
+    }
 
-/* Create the command message */
-command[0] = '\0';
-appendWithSpace(command, "SetNetAddr");
-int2Ascii(addr,netaddr);
-appendWithSpace(command, addr);
+    /* Create the command message */
+    command[0] = '\0';
+    appendWithSpace(command, "SetNetAddr");
+    int2Ascii(addr,netaddr);
+    appendWithSpace(command, addr);
 
-/* Send the message to the host */
-manCommandSend(manLink, command);
+    /* Send the message to the host */
+    manCommandSend(manLink, command);
 }
 
 /* 
@@ -364,11 +371,11 @@ manCommandSend(manLink, command);
  */
 void manGetHostState(managerLink * manLink)
 {
-char command[1000];
+    char command[1000];
 
-command[0] = '\0';                         /* Empty command string */
-appendWithSpace(command, "GetHostState");  /* Create the command */
-manCommandSend(manLink, command);          /* Send the command */
+    command[0] = '\0';                         /* Empty command string */
+    appendWithSpace(command, "GetHostState");  /* Create the command */
+    manCommandSend(manLink, command);          /* Send the command */
 }
 
 /* 
@@ -387,19 +394,19 @@ manCommandSend(manLink, command);          /* Send the command */
 void manDisplayHostState(char buffer[])
 {
 
-char word[1000];
+    char word[1000];
 
-findWord(word, buffer, 2);
-printf("Host physical ID: %s\n", word);
-findWord(word, buffer, 3);
-printf("Directory: %s\n", word);
-findWord(word, buffer, 4);
-printf("Network address: %s\n", word);
-findWord(word, buffer, 5);
-printf("Neighbor address: %s\n", word);
-findWord(word, buffer, 6);
-printf("New packet received flag: %s\n", word);
-printf("\n");
+    findWord(word, buffer, 2);
+    printf("Host physical ID: %s\n", word);
+    findWord(word, buffer, 3);
+    printf("Directory: %s\n", word);
+    findWord(word, buffer, 4);
+    printf("Network address: %s\n", word);
+    findWord(word, buffer, 5);
+    printf("Neighbor address: %s\n", word);
+    findWord(word, buffer, 6);
+    printf("New packet received flag: %s\n", word);
+    printf("\n");
 }
 
 /*
@@ -410,15 +417,17 @@ printf("\n");
  */
 void manDisplayHosts(int currhost, int maxHosts) 
 {
-int i; 
+    int i; 
 
-printf("List of hosts:\n");
+    printf("List of hosts:\n");
 
-for (i=0; i<maxHosts; i++) {
-   if (i == currhost) printf("   Host ID = %d (connected)\n",i);
-   else printf("   Host ID = %d\n",i);
-}
-printf("\n");
+    for (i=0; i<maxHosts; i++) 
+    {
+        if (i == currhost) printf("   Host ID = %d (connected)\n",i);
+        else printf("   Host ID = %d\n",i);
+    }
+
+    printf("\n");
 }
 
 /*
@@ -429,16 +438,17 @@ printf("\n");
  */ 
 int manChangeHost(int maxHosts) 
 {
-int newnumber;
+    int newnumber;
 
-do {
-   printf("Enter host ID number (range 0 to %d): ", maxHosts-1);
-   scanf("%d",&newnumber);
-   if (newnumber >= 0 && newnumber < maxHosts) break;
-   else printf("Number is out of range, try again\n\n");
-} while(1);
+    do 
+    {
+        printf("Enter host ID number (range 0 to %d): ", maxHosts-1);
+        scanf("%d",&newnumber);
+        if (newnumber >= 0 && newnumber < maxHosts) break;
+        else printf("Number is out of range, try again\n\n");
+    } while(1);
 
-return newnumber;
+    return newnumber;
 }
 
 
@@ -447,56 +457,72 @@ return newnumber;
  *****************************/
 void manMain(manLinkArrayType * manLinkArray)
 {
-int currhost;      /* The current host the manager is connected to */
-char cmd;          /* Command entered by user */
-int k;
+    int currhost;      /* The current host the manager is connected to */
+    char cmd;          /* Command entered by user */
+    int k;
 
-currhost = 0;      /* Manager is initially connected to host 0 */
+    currhost = 0;      /* Manager is initially connected to host 0 */
 
-while(1) {
-   /* Get a command from the user */
-   cmd = manGetUserCommand(currhost);
+    while(1) 
+    {
+        /* Get a command from the user */
+        cmd = manGetUserCommand(currhost);
 
-   /* Execute the command */
-   if (cmd == 'q') return;
-   else if (cmd == 'd') {
-      manGetHostState(&(manLinkArray->link[currhost]));
-      manWaitForReply(&(manLinkArray->link[currhost]), cmd);
-   } 
-   else if (cmd == 's') {
-      manSetNetAddr(&(manLinkArray->link[currhost]));
-      manWaitForReply(&(manLinkArray->link[currhost]), cmd);
-   } 
-   else if (cmd == 'm') { 
-      manSetMainDir(&(manLinkArray->link[currhost]));
-      manWaitForReply(&(manLinkArray->link[currhost]), cmd);
-   }
-   else if (cmd == 'f') {
-      manClearRcvFlg(&(manLinkArray->link[currhost]));
-      manWaitForReply(&(manLinkArray->link[currhost]), cmd);
-   }
-   else if (cmd == 'r') {
-      manDownloadPacket(&(manLinkArray->link[currhost])); 
-      manWaitForReply(&(manLinkArray->link[currhost]), cmd);
-   }
-   else if (cmd == 'u') {
-      manUploadPacket(&(manLinkArray->link[currhost])); 
-      manWaitForReply(&(manLinkArray->link[currhost]), cmd);
-   }
-   else if (cmd == 't') {
-      k = manTransmitPacket(&(manLinkArray->link[currhost]));
-      if (k==0) manWaitForReply(&(manLinkArray->link[currhost]), cmd);
-   }
-   else if (cmd == 'h') 
-      manDisplayHosts(currhost, manLinkArray->numlinks);
+        /* Execute the command */
+        if (cmd == 'q') return;
 
-   else if (cmd == 'c') 
-      currhost = manChangeHost(manLinkArray->numlinks);
+        else if (cmd == 'd') 
+        {
+            manGetHostState(&(manLinkArray->link[currhost]));
+            manWaitForReply(&(manLinkArray->link[currhost]), cmd);
+        } 
 
-   else printf("***Invalid command, you entered %c\n", cmd);
-}
-printf("\n");
-  
+        else if (cmd == 's') 
+        {
+            manSetNetAddr(&(manLinkArray->link[currhost]));
+            manWaitForReply(&(manLinkArray->link[currhost]), cmd);
+        }
+
+        else if (cmd == 'm') 
+        { 
+            manSetMainDir(&(manLinkArray->link[currhost]));
+            manWaitForReply(&(manLinkArray->link[currhost]), cmd);
+        }
+
+        else if (cmd == 'f') 
+        {
+            manClearRcvFlg(&(manLinkArray->link[currhost]));
+            manWaitForReply(&(manLinkArray->link[currhost]), cmd);
+        }
+
+        else if (cmd == 'r') 
+        {
+            manDownloadPacket(&(manLinkArray->link[currhost])); 
+            manWaitForReply(&(manLinkArray->link[currhost]), cmd);
+        }
+
+        else if (cmd == 'u') 
+        {
+            manUploadPacket(&(manLinkArray->link[currhost])); 
+            manWaitForReply(&(manLinkArray->link[currhost]), cmd);
+        }
+
+        else if (cmd == 't') 
+        {
+            k = manTransmitPacket(&(manLinkArray->link[currhost]));
+            if (k==0) manWaitForReply(&(manLinkArray->link[currhost]), cmd);
+        }
+
+        else if (cmd == 'h') 
+            manDisplayHosts(currhost, manLinkArray->numlinks);
+
+        else if (cmd == 'c') 
+            currhost = manChangeHost(manLinkArray->numlinks);
+
+        else printf("***Invalid command, you entered %c\n", cmd);
+    }
+
+    printf("\n");
 } 
 
 
