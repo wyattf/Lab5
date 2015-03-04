@@ -467,12 +467,27 @@ void manDisplayHosts(int currhost, int maxHosts)
 int manChangeHost(int maxHosts) 
 {
     int newnumber;
+    char temp;
 
     do 
     {
         printf("Enter host ID number (range 0 to %d): ", maxHosts-1);
         scanf("%d",&newnumber);
-        if (newnumber >= 0 && newnumber < maxHosts) break;
+
+        /* Ensure that the user input a single int.*/
+        temp = getchar();
+        while ( temp == ' ' || temp == '\t' )
+            temp = getchar();
+
+        if (temp != '\n')
+        {
+            printf("The host ID is invalid.\n");
+
+            while ( temp != '\n' )
+                temp = getchar();
+        }
+
+        else if (newnumber >= 0 && newnumber < maxHosts) break;
         else printf("Number is out of range, try again\n\n");
     } while(1);
 
