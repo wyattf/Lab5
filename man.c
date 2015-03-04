@@ -356,13 +356,28 @@ void manSetNetAddr(managerLink * manLink)
     int netaddr;
     char command[1000];
     char addr[1000]; 
+    char temp;
 
     /* Ask user for the network address */
     while(1) 
     {
         printf("Enter network address: ");
         scanf("%d",&netaddr);
-        if (netaddr <0)  printf("Address must be postive. Try again\n");
+        
+        /* Ensure that the user input a single int.*/
+        temp = getchar();
+        while ( temp == ' ' || temp == '\t' )
+            temp = getchar();
+
+        if (temp != '\n') 
+        {
+            printf("The address is invalid.\n");
+            
+            while ( temp != '\n' )
+                temp = getchar();
+        }
+
+        else if (netaddr < 0)  printf("Address must be postive. Try again\n");
         else if (netaddr > 10000)  printf("The address is too big. Try again\n");
         else break;
     }
