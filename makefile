@@ -3,6 +3,9 @@
 net367: host.o utilities.o link.o man.o main.o net.o
 	gcc -o net367 host.o utilities.o link.o man.o main.o net.o
 
+queue: switch.o testqueue.o
+	gcc -o queue switch.o testqueue.o
+
 main.o: main.c
 	gcc -c main.c
 
@@ -20,6 +23,11 @@ utilities.o: utilities.c
 
 link.o:  link.c
 	gcc -c link.c
+
+switch.o: switch.c
+	gcc -c switch.c
+testqueue.o: testqueue.c
+	gcc -c testqueue.c
 
 clean:
 	rm -f *.o net367

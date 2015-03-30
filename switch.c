@@ -2,6 +2,8 @@
  * This is the source code for the switch.
  */
 
+#include "switch.h"
+
 /***************************/
 /*   Functions for queue   */
 /***************************/
@@ -32,7 +34,7 @@ int queueFull(Queue * pqueue)
 // Append element to queue
 void queueAppend(Queue * pqueue, Element element)
 {
-    if(!queueFull)
+    if(!queueFull(pqueue))
     {
         pqueue->tail = (pqueue->tail+1)%MAXQUEUE;
         pqueue->elements[pqueue->tail] = element;
@@ -49,7 +51,7 @@ void queueAppend(Queue * pqueue, Element element)
 Element queueServe(Queue * pqueue)
 {
     Element deleted;
-    if(!queueEmpty)
+    if(!queueEmpty(pqueue))
     {
         deleted = pqueue->elements[pqueue->head];
         pqueue->head = (pqueue->head+1)%MAXQUEUE;
@@ -68,11 +70,11 @@ void queueDisplay(Queue * pqueue)
 {
     int i;
 
-    printf("Source Address\t\tDestination Address\n");
+    printf("Source Address\tDest Address\tLength\tPayload\n");
 
-    for(i=0; i < pqueue->size; i++)
+    for(i=pqueue->head; i <= pqueue->tail; i++)
     {
-        printf("\t%d\t\t\t%d\n", pqueue->element[i].srcaddr, pqueue->element[i].dstaddr);
+        printf("\t%d\t\t%d\t%d\t%s\n", pqueue->elements[i].srcaddr, pqueue->elements[i].dstaddr, pqueue->elements[i].length, pqueue->elements[i].payload);
     }
     
 }
@@ -88,12 +90,14 @@ void queueDisplay(Queue * pqueue)
 /*   Functions for Switch   */
 /****************************/
 // Initialize state of switch
-void switchInit(switchState * sstate, int physID)
+/*void switchInit(switchState * sstate, int physID)
 {
 
 }
 
 // Main loop for switch
 void switchMain(switchState * sstate)
+{
 
-
+}
+*/
