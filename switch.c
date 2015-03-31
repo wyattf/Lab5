@@ -47,7 +47,6 @@ void queueAppend(Queue * pqueue, Element element)
     {
         printf("Error: queue is full\n");
     }
-    
 }
 
 // Remove element from queue
@@ -65,7 +64,6 @@ Element queueServe(Queue * pqueue)
     {
         printf("Error: queue is empty\n");
     }
-    
 }
 
 // Display elements in queue
@@ -79,13 +77,88 @@ void queueDisplay(Queue * pqueue)
     {
         printf("\t%d\t\t%d\t%d\t%s\n", pqueue->elements[i].srcaddr, pqueue->elements[i].dstaddr, pqueue->elements[i].length, pqueue->elements[i].payload);
     }
-    
 }
 
 
 /**************************************/
 /*   Functions for Forwarding Table   */
 /**************************************/
+void tableInit(Table * ftable)
+{
+    ftable.size = 0;
+}
+
+void tableAddEntry(Table * ftable, int valid, int dstaddr, int linkOut)
+{
+    TableEntry newentry;
+    newentry.valid = valid;
+    newentry.dstaddr = dstaddr;
+    newentry.linkOut = linkOut;
+    Table->entries[table->size] = newentry;
+    Table->size++;
+}
+
+int tableEntryIndex(Table * ftable, int dstaddr)
+{
+    int i;
+    for(i=0; i<ftable->size; i++)
+    {
+        if(ftable->entries[i].dstaddr == dstaddr)
+            return i;
+    }
+    return -1;
+}
+
+void tableUpdateEntry(Table * ftable, int valid, int dstaddr, int linkOut)
+{
+    int i;
+
+    i = tableEntryIndex(ftable, dstaddr);
+
+    if(i != -1)
+    {
+        ftable->entries[i].valid = valid;
+        ftable->entries[i].linkOut = linkOut;
+    }
+}
+
+void tableUpdate(Table * ftable, int valid, int dstaddr, int linkOut)
+{
+    int i;
+    
+    i = tableEntryIndex(ftable, dstaddr);
+
+    if(i == -1)
+        tableAddEntry(ftable, valid, dstaddr, linkOut);
+    else tableUpdateEntry(ftable, valid, dstaddr, linkOut);
+}
+
+int tableGetOutLink(Table * ftable, int dstaddr)
+{
+    int i;
+    int linkOut;
+
+    i = tableEntryIndex(ftable, dstaddr);
+
+    if(i < ftable->size)
+    {
+        linkOut = ftable->entries[i].linkOut;
+        return linkOut;
+    }
+    return i;
+}
+
+void tableDisplay(Table * ftable)
+{
+    int i;
+
+    printf("Valid\tDestination Address\tLink Out\n");
+
+    for(i = 0; i < size; i++)
+    {
+        printf("\t%d\t%d\t\t%d\n", ftable->entries[i].valid, ftable->entries[i].dstAddr, ftable->entries[i].linkOut);
+    }
+}
 
 
 
@@ -93,14 +166,28 @@ void queueDisplay(Queue * pqueue)
 /*   Functions for Switch   */
 /****************************/
 // Initialize state of switch
-/*void switchInit(switchState * sstate, int physID)
+void switchInit(switchState * sstate, int physID)
 {
-
+    sstate.physId = physID;
+    sstate.numInLinks = 0;
+    sstate.numOutLinks = 0;
+    initTable(&(sstate.forwardingTable));
+    initQueue(&(sstate.packetQueue));
 }
 
 // Main loop for switch
 void switchMain(switchState * sstate)
 {
 
+    while(1){
+        // Check all incoming links for arriving packets
+            // If there is an incoming packet
+                // Put in packet queue
+                // Update forwarding table
+        // If queue is not empty, transmit a packet
+            //
+        // Sleep for 10 milliseconds
+    }
+
 }
-*/
+

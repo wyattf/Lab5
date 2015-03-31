@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include "main.h"
+#include "link.h"
+
 #define MAXQUEUE 10000
 #define MAXTABLE 100
 
@@ -46,8 +50,14 @@ void queueDisplay(Queue * pqueue);
 
 
 /* Functions for forwarding table */
-
-
+void tableInit(Table * ftable);
+void tableAddEntry(Table * ftable, );
+int tableEntryIndex(Table * ftable, int dstaddr);
+void tableUpdateEntry(Table * ftable, );
+void tableUpdate(Table * ftable, );
+int tableGetOu:w
+tLink(Table * ftable, );
+void tableDisplay(Table * ftable);
 
 
 /* Functions for switch */
