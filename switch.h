@@ -33,8 +33,8 @@ typedef struct {
     int physId;             // Physical ID
     int numInLinks;         // Number of incoming links
     int numOutLinks;        // Number of outgoing links
-    LinkInfo * linkIn;      // Incoming communication link
-    LinkInfo * linkOut;     // Outgoing communication link
+    LinkInfo * inLinks;      // Incoming communication link
+    LinkInfo * outLinks;     // Outgoing communication link
     Table forwardingTable;  // Forwarding table
     Queue packetQueue;      // Queue to hold packets
     } switchState;
