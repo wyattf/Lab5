@@ -2,6 +2,9 @@
  * This is the source code for the switch.
  */
 
+#include <stdio.h>
+#include "main.h"
+#include "link.h"
 #include "switch.h"
 
 /***************************/

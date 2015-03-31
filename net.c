@@ -39,6 +39,8 @@
 #include "link.h"
 #include "man.h"
 #include "host.h"
+#include "switch.h"
+
 
 #define EMPTY_ADDR  0xffff  /* Indicates that the empty address */
 /* It also indicates that the broadcast address */
@@ -136,9 +138,9 @@ void netCloseConnections(manLinkArrayType *  manLinkArray, int hostid)
 void netSetNetworkTopology(linkArrayType * linkArray)
 {
     linkArray->link[0].uniPipeInfo.physIdSrc = 0;
-    linkArray->link[0].uniPipeInfo.physIdDst = 1;
-    linkArray->link[1].uniPipeInfo.physIdSrc = 1;
-    linkArray->link[1].uniPipeInfo.physIdDst = 0;
+    linkArray->link[0].uniPipeInfo.physIdDst = 2;
+    linkArray->link[1].uniPipeInfo.physIdSrc = 2;
+    linkArray->link[1].uniPipeInfo.physIdDst = 1;
 }
 
 /*
@@ -225,3 +227,63 @@ void netCloseManConnections(manLinkArrayType * manLinkArray)
         close(manLinkArray->link[i].fromHost[PIPEWRITE]);
     }
 }
+
+
+/*
+ * Set the switch's links and update the link counters.
+ */
+void netSwitchLinks(linkArrayType* linkArray, switchState* sState, int switchId)
+{
+    int i;
+
+    for (i = 0; i < linkArray->numlinks; i++) 
+    {
+        if (linkArray->link[i].uniPipeInfo.physIdDst == switchId) 
+        {
+            sState->inLinks[sState->numInLinks] = linkArray->link[i];
+            sState->numInLinks++;
+        }
+
+        if (linkArray->link[i].uniPipeInfo.physIdSrc == switchId)
+        {
+            sState->outLinks[sState->numOutLinks] = linkArray->link[i];
+            sState->numOutLinks++;
+        }
+
+    }
+}
+
+/*
+ * Close links that are not in use by the switch.
+ */
+void netCloseSwitchOtherLinks(linkArrayType* linkArray, int switchId) 
+{
+    int i;
+
+    for (i = 0; i<linkArray->numlinks; i++)
+    {
+        if (linkArray->link[i].uniPipeInfo.physIdSrc != switchId)
+            close(linkArray->link[i].uniPipeInfo.fd[PIPEWRITE]);
+
+        if (linkArray->link[i].uniPipeInfo.physIdDst != switchId)
+            close(linkArray->link[i].uniPipeInfo.fd[PIPEREAD]);
+    }
+}
+
+/*
+ * Close all manager links.
+ */
+void netCloseAllManLinks(manLinkArrayType* manLinkArray) {
+
+    int i;
+
+    for (i = 0; i<manLinkArray->numlinks; i++) 
+    {
+        close(manLinkArray->link[i].toHost[PIPEREAD]);
+        close(manLinkArray->link[i].toHost[PIPEWRITE]);
+        close(manLinkArray->link[i].fromHost[PIPEREAD]);
+        close(manLinkArray->link[i].fromHost[PIPEWRITE]);
+    }
+
+}
+

@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include "main.h"
-#include "link.h"
-
 #define MAXQUEUE 10000
 #define MAXTABLE 100
 
@@ -55,5 +51,5 @@ void queueDisplay(Queue * pqueue);
 
 
 /* Functions for switch */
-//void switchInit(switchState * sstate, int physid);
-//void switchMain(switchState * sstate);
+void switchInit(switchState * sstate, int physid);
+void switchMain(switchState * sstate);

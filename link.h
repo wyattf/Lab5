@@ -25,7 +25,7 @@ typedef struct {  /* Has all the information to implement a link */
 
 typedef struct {
    int numlinks;
-   LinkInfo link[NUMLINKS];
+   LinkInfo * link;
 } linkArrayType;
 
 /* Transmit the packet in pbuff on the link */

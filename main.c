@@ -12,6 +12,7 @@
 #include "link.h"
 #include "man.h"
 #include "host.h"
+#include "switch.h"
 #include "net.h"
 
 #define EMPTY_ADDR  0xffff  /* Indicates the empty address */
@@ -31,27 +32,37 @@ void main()
     int i;
     int k;
 
+    int numHosts, numSwitches, numLinks;
+    switchState sState;
+
+
+    numLinks = numHosts + numSwitches;
+
+    /* Allocate space for link arrays. */
+    manLinkArray.link = (managerLink*)malloc(numHosts*sizeof(managerLink));
+    linkArray.link = (LinkInfo*)malloc(numLinks*sizeof(LinkInfo));
+    sState.inLinks = (LinkInfo*)malloc(numHosts*sizeof(LinkInfo));
+    sState.outLinks = (LinkInfo*)malloc(numHosts*sizeof(LinkInfo));
+
+
+
     /* 
      * Create nonblocking (pipes) between manager and hosts 
      * assuming that hosts have physical IDs 0, 1, ... 
      */
-    manLinkArray.numlinks = NUMHOSTS;
+    manLinkArray.numlinks = numHosts;
     netCreateConnections(& manLinkArray);
 
     /* Create links between nodes but not setting their end nodes */
-
-    linkArray.numlinks = NUMLINKS;
+    linkArray.numlinks = numLinks;
     netCreateLinks(& linkArray);
 
     /* Set the end nodes of the links */
-
     netSetNetworkTopology(& linkArray);
 
     /* Create nodes and spawn their own processes, one process per node */ 
-
-    for (physid = 0; physid < NUMHOSTS; physid++) 
+    for (physid = 0; physid < numHosts; physid++) 
     {
-
         pid = fork();
 
         if (pid == -1) 
@@ -59,6 +70,7 @@ void main()
             printf("Error:  the fork() failed\n");
             return;
         }
+
         else if (pid == 0) 
         { /* The child process -- a host node */
 
@@ -75,7 +87,6 @@ void main()
             netCloseConnections(& manLinkArray, physid);
 
             /* Initialize the host's incident communication links */
-
             k = netHostOutLink(&linkArray, physid); /* Host's outgoing link */
             hstate.linkout = linkArray.link[k];
 
@@ -89,6 +100,35 @@ void main()
             hostMain(&hstate);
         }  
     }
+
+    for (physid = numHosts; physid < numHosts + numSwitches; physid++)
+    {
+        pid = fork();
+
+        if (pid == -1) 
+        {
+            printf("Error: the fork() failed\n");
+            return;
+        }
+
+        else if (pid == 0) 
+        {
+            /* initialize the switch's state */
+            //switchInit(&sState, physid);
+
+            /* Close unnecessary links to manager */
+            netCloseAllManLinks(&manLinkArray);
+
+            /* initlialize the switch's links */
+            netSwitchLinks(&linkArray, &sState, physid);
+
+            /* close all other connections that are not connected to switch */
+            netCloseSwitchOtherLinks(&linkArray, physid);
+
+           // switchMain(&sState);
+        }
+    }
+
 
     /* Manager */
 
