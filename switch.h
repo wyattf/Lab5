@@ -1,12 +1,9 @@
-#include <stdio.h>
-#include "main.h"
-#include "link.h"
-
 #define MAXQUEUE 10000
 #define MAXTABLE 100
 
 /* Data types for queue */
 typedef packetBuffer Element;
+
 typedef struct {
     int head;
     int tail;
@@ -51,12 +48,11 @@ void queueDisplay(Queue * pqueue);
 
 /* Functions for forwarding table */
 void tableInit(Table * ftable);
-void tableAddEntry(Table * ftable, );
+void tableAddEntry(Table * ftable, int valid, int dstaddr, int linkOut);
 int tableEntryIndex(Table * ftable, int dstaddr);
-void tableUpdateEntry(Table * ftable, );
-void tableUpdate(Table * ftable, );
-int tableGetOu:w
-tLink(Table * ftable, );
+void tableUpdateEntry(Table * ftable, int valid, int dstaddr, int linkOut);
+void tableUpdate(Table * ftable, int valid, int dstaddr, int linkOut);
+int tableGetOutLink(Table * ftable, int dstaddr);
 void tableDisplay(Table * ftable);
 
 

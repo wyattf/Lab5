@@ -80,48 +80,47 @@ void queueDisplay(Queue * pqueue)
 }
 
 
+
 /**************************************/
 /*   Functions for Forwarding Table   */
 /**************************************/
+// Initialize table
 void tableInit(Table * ftable)
 {
-    ftable.size = 0;
+    ftable->size = 0;
 }
 
+// Add a new entry that does not exist in the table
 void tableAddEntry(Table * ftable, int valid, int dstaddr, int linkOut)
 {
     TableEntry newentry;
     newentry.valid = valid;
-    newentry.dstaddr = dstaddr;
+    newentry.dstAddr = dstaddr;
     newentry.linkOut = linkOut;
-    Table->entries[table->size] = newentry;
-    Table->size++;
+    ftable->entries[ftable->size] = newentry;
+    ftable->size++;
 }
 
+// Find the index of an entry in the table
 int tableEntryIndex(Table * ftable, int dstaddr)
 {
     int i;
     for(i=0; i<ftable->size; i++)
     {
-        if(ftable->entries[i].dstaddr == dstaddr)
+        if(ftable->entries[i].dstAddr == dstaddr)
             return i;
     }
     return -1;
 }
 
-void tableUpdateEntry(Table * ftable, int valid, int dstaddr, int linkOut)
+// Update an existing entry in the table
+void tableUpdateEntry(Table * ftable, int i, int valid, int linkOut)
 {
-    int i;
-
-    i = tableEntryIndex(ftable, dstaddr);
-
-    if(i != -1)
-    {
-        ftable->entries[i].valid = valid;
-        ftable->entries[i].linkOut = linkOut;
-    }
+    ftable->entries[i].valid = valid;
+    ftable->entries[i].linkOut = linkOut;
 }
 
+// Update the table
 void tableUpdate(Table * ftable, int valid, int dstaddr, int linkOut)
 {
     int i;
@@ -130,9 +129,10 @@ void tableUpdate(Table * ftable, int valid, int dstaddr, int linkOut)
 
     if(i == -1)
         tableAddEntry(ftable, valid, dstaddr, linkOut);
-    else tableUpdateEntry(ftable, valid, dstaddr, linkOut);
+    else tableUpdateEntry(ftable, i, valid, linkOut);
 }
 
+// Retrieve the value of the out link
 int tableGetOutLink(Table * ftable, int dstaddr)
 {
     int i;
@@ -148,15 +148,16 @@ int tableGetOutLink(Table * ftable, int dstaddr)
     return i;
 }
 
+// Display table
 void tableDisplay(Table * ftable)
 {
     int i;
 
     printf("Valid\tDestination Address\tLink Out\n");
 
-    for(i = 0; i < size; i++)
+    for(i = 0; i < ftable->size; i++)
     {
-        printf("\t%d\t%d\t\t%d\n", ftable->entries[i].valid, ftable->entries[i].dstAddr, ftable->entries[i].linkOut);
+        printf("%d\t%d\t\t\t%d\n", ftable->entries[i].valid, ftable->entries[i].dstAddr, ftable->entries[i].linkOut);
     }
 }
 
@@ -168,11 +169,11 @@ void tableDisplay(Table * ftable)
 // Initialize state of switch
 void switchInit(switchState * sstate, int physID)
 {
-    sstate.physId = physID;
-    sstate.numInLinks = 0;
-    sstate.numOutLinks = 0;
-    initTable(&(sstate.forwardingTable));
-    initQueue(&(sstate.packetQueue));
+    sstate->physId = physID;
+    sstate->numInLinks = 0;
+    sstate->numOutLinks = 0;
+    tableInit(&(sstate->forwardingTable));
+    queueInit(&(sstate->packetQueue));
 }
 
 // Main loop for switch
