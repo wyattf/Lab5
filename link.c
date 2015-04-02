@@ -147,7 +147,7 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
                 findWord(word, buffer, 5 + offset); /* data end flag */
                 pbuff[packetCount].start = ascii2Int(word);
 
-                findWord(word, buffer, 4 + offset); /* Payload */
+                findWord(word, buffer, 6 + offset); /* Payload */
 
                 /* 
                  * We will transform the payload so that 
