@@ -43,7 +43,6 @@ void main()
     if ( getTopology(sourceId, destId, &numHosts, &numSwitches, &numLinks) )
         return;
 
-
     /* Allocate space for link arrays. */
     manLinkArray.link = (managerLink*)malloc(numHosts*sizeof(managerLink));
     linkArray.link = (LinkInfo*)malloc(numLinks*sizeof(LinkInfo));

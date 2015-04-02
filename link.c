@@ -247,6 +247,13 @@ int linkSend(LinkInfo * link, packetBuffer pbuff[])
     int2Ascii(word, pbuff->length);  /* Append payload length */
     appendWithSpace(sendbuff, word);
 
+    int2Ascii(word, pbuff->end);     /* Append end flag */
+    appendWithSpace(sendbuff, word);
+
+    int2Ascii(word, pbuff->start);   /* Append start flag */
+    appendWithSpace(sendbuff, word);
+
+
     /* 
      * We will transform the payload so that 
      * a byte will be converted into two

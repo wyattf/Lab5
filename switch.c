@@ -222,25 +222,28 @@ void switchMain(switchState * sstate)
             // Check forwarding table for outgoing link
             outLink = tableGetOutLink(&(sstate->forwardingTable), outPacket.dstaddr);
 
-            // If out going link exists in table
-            if(outLink != -1)
+            if (outPacket.srcaddr != -1 )
             {
-                // Transmit packet on the outgoing link
-                linkSend(&(sstate->outLinks[outLink]), &outPacket);
-            }
-
-            // Else send to all links except for the incoming one
-            else
-            {
-                // Get source link of packet
-                inLink = tableGetOutLink(&(sstate->forwardingTable), outPacket.srcaddr);
-
-                // For all outgoing links
-                for(j=0; j<sstate->numOutLinks; j++)
+                // If out going link exists in table
+                if(outLink != -1)
                 {
-                    // Send on link if its not the incoming link
-                    if(j != inLink)
-                        linkSend(&(sstate->outLinks[outLink]), &outPacket);
+                    // Transmit packet on the outgoing link
+                    linkSend(&(sstate->outLinks[outLink]), &outPacket);
+                }
+
+                // Else send to all links except for the incoming one
+                else
+                {
+                    // Get source link of packet
+                    inLink = tableGetOutLink(&(sstate->forwardingTable), outPacket.srcaddr);
+
+                    // For all outgoing links
+                    for(j=0; j<sstate->numOutLinks; j++)
+                    {
+                        // Send on link if its not the incoming link
+                        if(j != inLink)
+                            linkSend(&(sstate->outLinks[outLink]), &outPacket);
+                    }
                 }
             }
         }
