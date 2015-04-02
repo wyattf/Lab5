@@ -418,6 +418,8 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
     }
 
     tempbuff[length] = '\0';
+    hstate->sendDataBuff.valid = 1;
+    hstate->sendDataBuff.length = length;
 
     /* Fill in send packet buffer */
 
