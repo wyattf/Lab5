@@ -3,9 +3,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "main.h"
 #include "link.h"
 #include "switch.h"
+
+#define TENMILLISEC 10000
 
 /***************************/
 /*   Functions for queue   */
@@ -140,12 +144,14 @@ int tableGetOutLink(Table * ftable, int dstaddr)
 
     i = tableEntryIndex(ftable, dstaddr);
 
-    if(i<ftable->size)
+    if(i == -1)
+        return i;
+
+    else
     {
         linkOut = ftable->entries[i].linkOut;
         return linkOut;
     }
-    return i;
 }
 
 // Display table
@@ -179,26 +185,68 @@ void switchInit(switchState * sstate, int physID)
 // Main loop for switch
 void switchMain(switchState * sstate)
 {
-    int l;      // Counter for incoming links
-    int i;      // Counter for packets
-    
+    int l;                  // Counter for incoming links
+    int i;                  // Counter for packets
+    int j;                  // Counter for outgoing links
+    int packetCount = 0;    // Number of packets on link
+    int outLink;            // Link to transmit packet on
+    int inLink;             // Link incoming packet arrived on
+    packetBuffer outPacket;
+    packetBuffer packets[10];
 
-    while(1){
+    while(1)
+    {
         // Check all incoming links for arriving packets
         for(l=0; l<sstate->numInLinks; l++)
         {
-            // If there is an incoming packet
-            if
+            // Check link for packets
+            packetCount = linkReceive(&(sstate->inLinks[i]), packets);
+            
+            // For all incoming packets on link
+            for(i=0;i<packetCount;i++)
+            {
                 // Put in packet queue
-                // Update forwarding table
-        }
-        // If queue is not empty, transmit a packet
-            // Check forwarding table for outgoing link
-            // If out going link exists in table
-                // Transmit packet on the outgoing link
-            // Else send to all links except for the incoming one
-        // Sleep for 10 milliseconds
-    }
+                queueAppend(&(sstate->packetQueue), packets[i]);
 
+                // Update forwarding table
+                tableUpdate(&(sstate->forwardingTable), packets[i].valid, packets[i].srcaddr, l);
+            }
+        }
+
+        // If queue is not empty, transmit a packet
+        if(sstate->packetQueue.size != 0)
+        {
+            // Get packet from head of packet Queue
+            outPacket = queueServe(&(sstate->packetQueue));
+
+            // Check forwarding table for outgoing link
+            outLink = tableGetOutLink(&(sstate->forwardingTable), outPacket.dstaddr);
+
+            // If out going link exists in table
+            if(outLink != -1)
+            {
+                // Transmit packet on the outgoing link
+                linkSend(&(sstate->outLinks[outLink]), &outPacket);
+            }
+
+            // Else send to all links except for the incoming one
+            else
+            {
+                // Get source link of packet
+                inLink = tableGetOutLink(&(sstate->forwardingTable), outPacket.srcaddr);
+
+                // For all outgoing links
+                for(j=0; j<sstate->numOutLinks; j++)
+                {
+                    // Send on link if its not the incoming link
+                    if(j != inLink)
+                        linkSend(&(sstate->outLinks[outLink]), &outPacket);
+                }
+            }
+        }
+
+        // Sleep for 10 milliseconds
+        usleep(TENMILLISEC);
+    }
 }
 
