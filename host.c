@@ -425,9 +425,6 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
 
     /* Fill in send packet buffer */
 
-    hstate->sendPacketBuff.valid=1;
-    hstate->sendPacketBuff.length=length;
-
     for (i=0; i<length; i++)
     { /* Store tempbuff in payload of data buffer */
         hstate->sendDataBuff.data[i] = tempbuff[i];
@@ -464,7 +461,7 @@ void hostDownloadPacket(hostState * hstate, char fname[], char replymsg[])
 
     /* Create a path to the file and then open it */
 
-    if (hstate->rcvPacketBuff.valid == 0) 
+    if (hstate->rcvDataBuff.valid == 0) 
     {
         strcpy(replymsg, "Download aborted: the receive packet buffer is empty");
         return;
