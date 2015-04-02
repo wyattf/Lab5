@@ -365,6 +365,8 @@ void hostInitSendPacketBuff(packetBuffer * packetbuff)
 {
     packetbuff->valid = 0;
     packetbuff->new = 0;
+    packetbuff->end = 0;
+    packetbuff->start = 0;
 }
 
 
@@ -445,6 +447,8 @@ void hostInitRcvPacketBuff(packetBuffer * packetbuff)
 {
     packetbuff->valid = 0;
     packetbuff->new = 0;
+    packetbuff->end = 0;
+    packetbuff->start = 0;
 }
 
 /*
