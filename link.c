@@ -99,10 +99,10 @@ int linkCreate(LinkInfo * link)
 }
 
 /*
- * Checks incoming link and if stores it in a packet buffer.
- * Returns the length of the contents on the incoming link.
+ * Checks an incoming link and stores any packets in a buffer.
+ * Returns the amount of packets stored.
  */
-int linkReceive(LinkInfo * link, packetBuffer * pbuff)
+int linkReceive(LinkInfo * link, packetBuffer pbuff[])
 {
     int n;
     char buffer[1000];
@@ -112,70 +112,99 @@ int linkReceive(LinkInfo * link, packetBuffer * pbuff)
     int wordptr;
     char lowbits;
     char highbits;
+    int packetCount = 0; //amount of packets in the buffer
+    int offset = 0; //offset between packets
 
     n = 0;
 
     if (link->linkType==UNIPIPE) 
     {
         n = read(link->uniPipeInfo.fd[PIPEREAD], buffer, 1000);
-        if (n > 0) 
-        {
-            /* 
-             * Something is received on link. 
-             * Store it in the packet buffer
-             */
 
-            buffer[n] = '\0';
-
-            findWord(word, buffer, 1); /* Destination address */
-            pbuff->dstaddr = ascii2Int(word);
-
-            findWord(word, buffer, 2); /* Source address */
-            pbuff->srcaddr = ascii2Int(word);
-
-            findWord(word, buffer, 3); /* Length */
-            pbuff->length = ascii2Int(word);
-
-            findWord(word, buffer, 4); /* Payload */
-
-            /* 
-             * We will transform the payload so that 
-             *
-             *  Each symbol 'a', 'b', ..., 'p' converts to the 
-             *  4-bits 0000, 0001,..., 1111
-             *  Each pair of symbols converts to a byte.
-             *  For example, 'ac' converts to 00000010
-             *  Note the first symbol is the high order bits
-             *  and the second symbol is the low order bits
-             */
-
-            for (k = 0; k < pbuff->length; k++)
+        if (n >= 0)
+        { 
+            while (offset >= 0) 
             {
-                highbits = word[2*k]-'a';  
-                lowbits = word[2*k+1]-'a';
-                highbits = highbits * 16; /* Shift to the left by 4 bits */
-                pbuff->payload[k] = highbits + lowbits;
-            } /* end of for */
+                /* 
+                 * Something is received on link. 
+                 * Store it in the packet buffer
+                 */
 
-            pbuff->payload[k] = '\0';
-            pbuff->valid=1;
-            pbuff->new=1;
-        } /* end of if */
+                buffer[n] = '\0';
+
+                findWord(word, buffer, 1 + offset); /* Destination address */
+                pbuff[packetCount].dstaddr = ascii2Int(word);
+
+                findWord(word, buffer, 2 + offset); /* Source address */
+                pbuff[packetCount].srcaddr = ascii2Int(word);
+
+                findWord(word, buffer, 3 + offset); /* Length */
+                pbuff[packetCount].length = ascii2Int(word);
+
+                findWord(word, buffer, 4 + offset); /* data start flag */
+                pbuff[packetCount].end = ascii2Int(word);
+
+                findWord(word, buffer, 5 + offset); /* data end flag */
+                pbuff[packetCount].start = ascii2Int(word);
+
+                findWord(word, buffer, 4 + offset); /* Payload */
+
+                /* 
+                 * We will transform the payload so that 
+                 *
+                 *  Each symbol 'a', 'b', ..., 'p' converts to the 
+                 *  4-bits 0000, 0001,..., 1111
+                 *  Each pair of symbols converts to a byte.
+                 *  For example, 'ac' converts to 00000010
+                 *  Note the first symbol is the high order bits
+                 *  and the second symbol is the low order bits
+                 */
+
+                for (k = 0; k < pbuff[packetCount].length; k++)
+                {
+                    highbits = word[2*k]-'a';  
+                    lowbits = word[2*k+1]-'a';
+                    highbits = highbits * 16; /* Shift to the left by 4 bits */
+                    pbuff[packetCount].payload[k] = highbits + lowbits;
+                } /* end of for */
+
+                pbuff[packetCount].payload[k] = '\0';
+                pbuff[packetCount].valid=1;
+                pbuff[packetCount].new=1;
+
+                //increment number of packets collected
+                packetCount++; 
+
+                //check for another packet
+                findWord(word, buffer, 7 + offset);
+
+                //if there is a new packet, update the offset
+                if (word[0] != '\0') 
+                {
+                    offset = offset + 6;
+                } 
+
+                else
+                {
+                    offset = -1;
+                }
+            }
+        } 
 
         else 
         { /* Not a packet */
-            pbuff->valid=0;
-            pbuff->new=0;
+            pbuff[packetCount].valid=0;
+            pbuff[packetCount].new=0;
         }
     }
 
-    return n; /* Return length what was received on the link */ 
+    return packetCount;
 }
 
 /*
  * Sends the packet in pbuff on the outgoing link.
  */
-int linkSend(LinkInfo * link, packetBuffer * pbuff)
+int linkSend(LinkInfo * link, packetBuffer pbuff[])
 {
     char sendbuff[1000];  /* buffer to build the message */
     char word[1000];

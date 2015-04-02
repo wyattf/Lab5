@@ -21,6 +21,9 @@
 #define PIPEWRITE 1 
 #define PIPEREAD  0
 
+int getTopology(int sourceId[], int destId[], int * numHosts, int * numSwitches, int * numLinks);
+
+
 void main()
 {
     hostState hstate;             /* The host's state */
@@ -29,14 +32,17 @@ void main()
 
     pid_t pid;  /* Process id */
     int physid; /* Physical ID of host */
-    int i;
-    int k;
 
+    int i, k;
     int numHosts, numSwitches, numLinks;
     switchState sState;
 
+    int sourceId[20];
+    int destId[20];
 
-    numLinks = numHosts + numSwitches;
+    if ( getTopology(sourceId, destId, &numHosts, &numSwitches, &numLinks) )
+        return;
+
 
     /* Allocate space for link arrays. */
     manLinkArray.link = (managerLink*)malloc(numHosts*sizeof(managerLink));
@@ -58,7 +64,7 @@ void main()
     netCreateLinks(& linkArray);
 
     /* Set the end nodes of the links */
-    netSetNetworkTopology(& linkArray);
+    netSetNetworkTopology(& linkArray, sourceId, destId);
 
     /* Create nodes and spawn their own processes, one process per node */ 
     for (physid = 0; physid < numHosts; physid++) 
@@ -99,6 +105,8 @@ void main()
             /* Go to the main loop of the host node */
             hostMain(&hstate);
         }  
+        
+        usleep(20000);
     }
 
     for (physid = numHosts; physid < numHosts + numSwitches; physid++)
@@ -114,7 +122,7 @@ void main()
         else if (pid == 0) 
         {
             /* initialize the switch's state */
-            //switchInit(&sState, physid);
+            switchInit(&sState, physid);
 
             /* Close unnecessary links to manager */
             netCloseAllManLinks(&manLinkArray);
@@ -125,8 +133,10 @@ void main()
             /* close all other connections that are not connected to switch */
             netCloseSwitchOtherLinks(&linkArray, physid);
 
-           // switchMain(&sState);
+            switchMain(&sState);
         }
+
+        usleep(20000);
     }
 
 
@@ -166,3 +176,59 @@ void main()
 
 
 
+
+int getTopology(int sourceId[], int destId[], int * numHosts, int * numSwitches, int * numLinks)
+{
+    int err = 0;
+    int i = 0;
+    char fName[100];
+    char word[100];
+    char line[100];
+    FILE * file;
+
+    *numHosts = -1;
+    *numSwitches = -1;
+    *numLinks = -1;
+
+    printf("Please enter a file to read from:  ");
+    scanf("%s", fName);
+
+    file = fopen(fName, "r");
+
+    if ( file != NULL )
+    {
+        fgets(line, sizeof line, file);
+        findWord(word, line, 1);
+        *numHosts = ascii2Int(word);
+        findWord(word, line, 2);
+        *numSwitches = ascii2Int(word);
+        findWord(word, line, 3);
+        *numLinks = ascii2Int(word);
+
+
+        while ( fgets(line, 100, file) != NULL ) 
+        {
+            findWord(word, line, 1);
+            sourceId[i] = ascii2Int(word);
+            findWord(word, line, 2);
+            destId[i] = ascii2Int(word);
+            i++;
+        }
+
+        fclose(file);
+    }
+
+    else
+    {
+        printf("Error opening the file!");
+        err = 1;
+    }
+
+    if (numHosts < 0 || numSwitches < 0 || numLinks < 0 )
+    {
+        printf("The file was invalid!");
+        err = 2;
+    }
+
+    return err;
+}

@@ -135,12 +135,19 @@ void netCloseConnections(manLinkArrayType *  manLinkArray, int hostid)
  * just two links between two hosts
  */
 
-void netSetNetworkTopology(linkArrayType * linkArray)
+void netSetNetworkTopology(linkArrayType * linkArray, int source[], int dest[])
 {
-    linkArray->link[0].uniPipeInfo.physIdSrc = 0;
-    linkArray->link[0].uniPipeInfo.physIdDst = 2;
-    linkArray->link[1].uniPipeInfo.physIdSrc = 2;
-    linkArray->link[1].uniPipeInfo.physIdDst = 1;
+    int i, k = 0;
+
+    for (i = 0; i < linkArray->numlinks; i+=2)
+    {
+        linkArray->link[i].uniPipeInfo.physIdSrc = source[k];
+        linkArray->link[i].uniPipeInfo.physIdDst = dest[k];
+        linkArray->link[i+1].uniPipeInfo.physIdSrc = dest[k];
+        linkArray->link[i+1].uniPipeInfo.physIdDst = source[k];
+        k++;
+    }
+
 }
 
 /*

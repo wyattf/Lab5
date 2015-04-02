@@ -40,7 +40,7 @@
 #include "host.h"
 
 #define EMPTY_ADDR  0xffff  /* Indicates that the empty address */
-                             /* It also indicates that the broadcast address */
+/* It also indicates that the broadcast address */
 #define MAXBUFFER 1000
 #define PIPEWRITE 1 
 #define PIPEREAD  0
@@ -86,7 +86,7 @@ void hostSetMainDir(hostState * hstate, char filename[], char replymsg[]);
 void hostClearRcvFlg(hostState * hstate, char replymsg[]);
 void hostUploadPacket(hostState * hstate, char fname[], char replymsg[]); 
 void hostDownloadPacket(hostState * hstate, char fname[], char replymsg[]); 
-void hostTransmitPacket(hostState * hstate, char word[], char replymsg[]);
+void hostTransmitPacket(hostState * hstate, char replymsg[]);
 void hostGetHostState(hostState * hstate, managerLink * manLink, char replymsg[]);
 
 /* 
@@ -100,6 +100,11 @@ void hostGetHostState(hostState * hstate, managerLink * manLink, char replymsg[]
  */ 
 void hostReplySend(managerLink * manLink, char replytype[], char reply[]);
 
+void hostInitTransmit(hostState * hstate, char word[], char replymsg[]);
+void hostInitDataBuffer(dataBuffer * buff);
+
+
+
 /* This is used to send a message to the manager */
 void hostToManSend(managerLink * manLink, char reply[]);
 
@@ -110,28 +115,58 @@ void hostToManSend(managerLink * manLink, char reply[]);
 /*
  * hostTransmitPacket will transmit a packet in the send packet buffer
  */
-void hostTransmitPacket(hostState * hstate, char word[], char replymsg[])
+void hostTransmitPacket(hostState * hstate, char replymsg[])
 {
-    char dest[1000];
-    int  dstaddr;
+    int i;
+    int length = hstate->sendDataBuff.length - hstate->sendDataBuff.pos;
 
-    /* Get the destination address from the manager's command message (word[]) */ 
-    findWord(dest, word, 2);
-    dstaddr = ascii2Int(dest);
-
-    /* 
-     * Set up the send packet buffer's source and destination addresses
-     */
-    hstate->sendPacketBuff.dstaddr = dstaddr;
+    if (length > PAYLOAD_LENGTH)
+        length = PAYLOAD_LENGTH;
+    /* Set up the send packet buffer's source and destination addresses */
+    hstate->sendPacketBuff.dstaddr = hstate->sendDataBuff.dstaddr;
     hstate->sendPacketBuff.srcaddr = hstate->netaddr;
+    hstate->sendPacketBuff.length = length;
+    hstate->sendPacketBuff.end = 0;
+    hstate->sendPacketBuff.start = 0;
+
+    /* raise the start flag if the current position is 0 */
+    if (hstate->sendDataBuff.pos == 0)
+        hstate->sendPacketBuff.start = 1;
+    
+    /* rais the valid flag if the data is valid in the data buffer */
+    if (hstate->sendDataBuff.valid)
+        hstate->sendPacketBuff.valid = 1;
+
+    /* transfer data from the data buffer to the packet buffer */
+    for (i = 0; i < length; i++)
+        hstate->sendPacketBuff.payload[i] = hstate->sendDataBuff.data[i+hstate->sendDataBuff.pos];
+
+    /* increment the position */
+    hstate->sendDataBuff.pos += length;
+
+    /* set the end flag if the final index has been reached */
+    if (hstate->sendDataBuff.pos >= hstate->sendDataBuff.length)
+    {
+        hstate->sendDataBuff.pos = 0;
+        hstate->sendDataBuff.busy = 0;
+        hstate->sendPacketBuff.end = 1;
+    }
 
     /* Transmit the packet on the link */
-    linkSend(&(hstate->linkout), &(hstate->sendPacketBuff));
+    if ( linkSend(&(hstate->linkout), &(hstate->sendPacketBuff)) == -1 )
+    {
+        strcpy(replymsg,"Error: Could not send packet, aborting transmit");
+        hostInitDataBuffer(&(hstate->sendDataBuff));
+        return;
+    }
 
     /* Message to be sent back to the manager */
-    strcpy(replymsg,"Packet sent");
-}
+    if (hstate->sendPacketBuff.end == 1) 
+        strcpy(replymsg,"Final Packet Sent");
 
+    else
+        strcpy(replymsg,"Packet sent");
+}
 
 /* 
  * Main loop of the host node
@@ -153,7 +188,8 @@ void hostMain(hostState * hstate)
     char word[1000];
     int  value;
     char replymsg[1000];   /* Reply message to be displayed at the manager */
-    packetBuffer tmpbuff;
+    packetBuffer tmpbuff[10]; /* array of packet buffers to store multiple incoming packets */
+    int packetCount, i;
 
     while(1)
     {
@@ -207,27 +243,50 @@ void hostMain(hostState * hstate)
 
             else if (strcmp(word, "TransmitPacket")==0) 
             {
-                hostTransmitPacket(hstate, buffer, replymsg);
+                hostInitTransmit(hstate, buffer, replymsg);
                 hostReplySend(&(hstate->manLink), "DISPLAY", replymsg);
             }
         } /* end of if */
 
-        /* Check if there is an incoming packet */
-        linkReceive(&(hstate->linkin), &tmpbuff);
+        /* transmit a packet */
+        if (hstate->sendDataBuff.busy == 1)
+            hostTransmitPacket(hstate, replymsg);
 
-        /* 
-         * If there is a packet and if the packet's destination address 
+        /* Check if there are any incoming packets */
+        packetCount = linkReceive(&(hstate->linkin), tmpbuff);
+
+        /*
+         * If there is at least one packet and if the packet's destination address
          * is the host's network address then store the packet in the
          * receive packet buffer
          */
-        if (tmpbuff.dstaddr == hstate->netaddr && tmpbuff.valid == 1 && tmpbuff.new == 1)
+        for (i = 0; i < packetCount; i++) 
         {
-            hstate->rcvPacketBuff = tmpbuff;
-            hstate->rcvPacketBuff.new = 1;
-            hstate->rcvPacketBuff.valid = 1;
+            if (tmpbuff[i].dstaddr == hstate->netaddr && tmpbuff[i].valid == 1) 
+            {
+                /* clear old data and reinitialize values if the start of a new packet is read */
+                if (tmpbuff[i].start == 1) 
+                {
+                    memset(hstate->rcvDataBuff.data, 0, sizeof(hstate->rcvDataBuff.data));
+                    hstate->rcvDataBuff.length = 0;
+                    hstate->rcvflag = 0;
+                }
+
+                /* add new data to rcv buffer */
+                strcat(hstate->rcvDataBuff.data, tmpbuff[i].payload);
+                hstate->rcvDataBuff.length += tmpbuff[i].length;
+                hstate->rcvDataBuff.srcaddr = tmpbuff[i].srcaddr;
+                hstate->rcvDataBuff.dstaddr = tmpbuff[i].dstaddr;
+
+                /* raise the rcv flag if the final packet of a payload has been received */
+                if (tmpbuff[i].end == 1) 
+                {
+                    hstate->rcvflag = 1;
+                    hstate->rcvDataBuff.valid = 1;
+                }
+            }
         }
 
-        /* The host goes to sleep for 10 ms */
         usleep(TENMILLISEC);
 
     } /* End of while loop */
@@ -493,7 +552,7 @@ void hostGetHostState(hostState * hstate, managerLink * manLink, char replymsg[]
     else appendWithSpace(replymsg, hstate->maindir);
 
     if (hstate->netaddr == EMPTY_ADDR) appendWithSpace(replymsg, empty);
-    
+
     else
     {
         int2Ascii(word, hstate->netaddr);
@@ -527,3 +586,39 @@ void hostInitState(hostState * hstate, int physid)
 }
 
 
+
+void hostInitDataBuffer(dataBuffer * buff) 
+{
+    buff->pos = 0;
+    buff->busy = 0;
+    buff->valid = 0;
+    buff->length = 0;
+    buff->start = 0;
+    buff->end = 0;
+}
+
+
+
+void hostInitTransmit(hostState * hstate, char word[], char replymsg[]) 
+{
+    if (hstate->sendDataBuff.busy == 1) 
+    {
+        strcpy(replymsg, "Already busy trasmitting.");
+        return;
+    }
+    if (hstate->sendDataBuff.valid == 0)
+    {
+        strcpy(replymsg, "Invalid entry.");
+        return;
+    }
+
+    char dest[1000];
+    int  dstaddr;
+
+    findWord(dest, word, 2);
+    dstaddr = ascii2Int(dest);
+    hstate->sendDataBuff.dstaddr = dstaddr;
+    hstate->sendDataBuff.busy = 1;
+    hstate->sendDataBuff.pos = 0;
+    strcpy(replymsg, "Transmiting...");
+}

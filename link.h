@@ -1,8 +1,6 @@
 /* Definitions and prototypes for the link (link.c)
  */
 
-#define NUMLINKS 2
-
 enum LinkType {UNIPIPE}; /* UNIPIPE = unidirectional pipe
                           * We can add more types later
                           */
@@ -29,10 +27,10 @@ typedef struct {
 } linkArrayType;
 
 /* Transmit the packet in pbuff on the link */
-int linkSend(LinkInfo * link, packetBuffer * pbuff);
+int linkSend(LinkInfo * link, packetBuffer pbuff[]);
 
 /* Downloads a packet from the link into pbuff */
-int linkReceive(LinkInfo * link, packetBuffer * pbuff);
+int linkReceive(LinkInfo * link, packetBuffer pbuff[]);
 
 /* Closes a link */
 int linkClear(LinkInfo * link);

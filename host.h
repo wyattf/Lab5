@@ -17,6 +17,8 @@ typedef struct
     managerLink manLink;       /* Connection to the manager */
     LinkInfo linkin;           /* Incoming communication link */
     LinkInfo linkout;          /* Outgoing communication link */
+    dataBuffer sendDataBuff;
+    dataBuffer rcvDataBuff;
 } hostState;
 
 void hostMain(hostState * hstate);
