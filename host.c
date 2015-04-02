@@ -429,8 +429,8 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
     hstate->sendPacketBuff.length=length;
 
     for (i=0; i<length; i++)
-    { /* Store tempbuff in payload of packet buffer */
-        hstate->sendPacketBuff.payload[i] = tempbuff[i];
+    { /* Store tempbuff in payload of data buffer */
+        hstate->sendDataBuff.data[i] = tempbuff[i];
     }
 
     /* Message to the manager */
@@ -486,8 +486,10 @@ void hostDownloadPacket(hostState * hstate, char fname[], char replymsg[])
     /* Download the packet buffer payload into the file */
     if (hstate->rcvPacketBuff.new == 1) 
     {
-        fwrite(hstate->rcvPacketBuff.payload,1,hstate->rcvPacketBuff.length,fp);
-        hstate->rcvPacketBuff.new=0;
+        fwrite(hstate->rcvDataBuff.data,1,hstate->rcvDataBuff.length,fp);
+        memset(hstate->rcvDataBuff.data, 0, sizeof(hstate->sendDataBuff.data));
+        hstate->rcvflag = 0;
+        hostInitDataBuffer(&(hstate->rcvDataBuff));
     }
 
     /* Message sent to the manager */
@@ -501,8 +503,8 @@ void hostDownloadPacket(hostState * hstate, char fname[], char replymsg[])
 void hostClearRcvFlg(hostState * hstate, char replymsg[])
 {
     hstate->rcvflag = 0;
-    hstate->rcvPacketBuff.valid = 0;
-    hstate->rcvPacketBuff.new = 0;
+    hstate->rcvDataBuff.valid = 0;
+    memset(hstate->rcvDataBuff.data, 0, sizeof(hstate->sendDataBuff.data));
 
     /* Message to the manager */
     strcpy(replymsg, "Host's packet received flag is cleared");
