@@ -140,7 +140,7 @@ int tableGetOutLink(Table * ftable, int dstaddr)
 
     i = tableEntryIndex(ftable, dstaddr);
 
-    if(i < ftable->size)
+    if(i<ftable->size)
     {
         linkOut = ftable->entries[i].linkOut;
         return linkOut;
@@ -155,7 +155,7 @@ void tableDisplay(Table * ftable)
 
     printf("Valid\tDestination Address\tLink Out\n");
 
-    for(i = 0; i < ftable->size; i++)
+    for(i=0; i<ftable->size; i++)
     {
         printf("%d\t%d\t\t\t%d\n", ftable->entries[i].valid, ftable->entries[i].dstAddr, ftable->entries[i].linkOut);
     }
@@ -179,14 +179,24 @@ void switchInit(switchState * sstate, int physID)
 // Main loop for switch
 void switchMain(switchState * sstate)
 {
+    int l;      // Counter for incoming links
+    int i;      // Counter for packets
+    
 
     while(1){
         // Check all incoming links for arriving packets
+        for(l=0; l<sstate->numInLinks; l++)
+        {
             // If there is an incoming packet
+            if
                 // Put in packet queue
                 // Update forwarding table
+        }
         // If queue is not empty, transmit a packet
-            //
+            // Check forwarding table for outgoing link
+            // If out going link exists in table
+                // Transmit packet on the outgoing link
+            // Else send to all links except for the incoming one
         // Sleep for 10 milliseconds
     }
 
