@@ -175,6 +175,10 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
                 //increment number of packets collected
                 packetCount++; 
 
+
+printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
+
+
                 //check for another packet
                 findWord(word, buffer, 7 + offset);
 
@@ -287,5 +291,7 @@ int linkSend(LinkInfo * link, packetBuffer pbuff[])
 
     /* Used for DEBUG -- trace packets being sent */
     printf("Link %d transmitted\n",link->linkID);
+
+    printf("linkSend: Contents of buffer: %s\n", pbuff->payload);
 }
 
