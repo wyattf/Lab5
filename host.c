@@ -355,7 +355,7 @@ void hostInit(hostState * hstate, int physid)
 
     /* Initialize the receive and send packet buffers */
     hostInitRcvPacketBuff(&(hstate->rcvPacketBuff));  
-    hostInitSendPacketBuff(&(hstate->rcvPacketBuff)); 
+    hostInitSendPacketBuff(&(hstate->sendPacketBuff)); 
 }
 
 /* 
@@ -425,6 +425,7 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
 
     /* Fill in send packet buffer */
 
+    memset(hstate->sendDataBuff.data, 0, sizeof(hstate->sendDataBuff.data));
     for (i=0; i<length; i++)
     { /* Store tempbuff in payload of data buffer */
         hstate->sendDataBuff.data[i] = tempbuff[i];
@@ -588,6 +589,8 @@ void hostInitState(hostState * hstate, int physid)
     hstate->nbraddr = EMPTY_ADDR;  
     hstate->rcvPacketBuff.valid = 0;
     hstate->rcvPacketBuff.new = 0;
+    hostInitDataBuffer(&(hstate->sendDataBuff));
+    hostInitDataBuffer(&(hstate->rcvDataBuff));
 }
 
 
