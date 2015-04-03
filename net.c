@@ -256,7 +256,6 @@ void netSwitchLinks(linkArrayType* linkArray, switchState* sState, int switchId)
             sState->outLinks[sState->numOutLinks] = linkArray->link[i];
             sState->numOutLinks++;
         }
-
     }
 }
 

@@ -200,8 +200,8 @@ void switchMain(switchState * sstate)
         for(l=0; l<sstate->numInLinks; l++)
         {
             // Check link for packets
-            packetCount = linkReceive(&(sstate->inLinks[i]), packets);
-            
+            packetCount = linkReceive(&(sstate->inLinks[l]), packets);
+
             // For all incoming packets on link
             for(i=0;i<packetCount;i++)
             {

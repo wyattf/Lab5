@@ -104,7 +104,7 @@ int linkCreate(LinkInfo * link)
  */
 int linkReceive(LinkInfo * link, packetBuffer pbuff[])
 {
-    int n;
+    int n = 0;
     char buffer[1000];
     char word[1000];
     int count;
@@ -115,14 +115,13 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
     int packetCount = 0; //amount of packets in the buffer
     int offset = 0; //offset between packets
 
-    n = 0;
-
     if (link->linkType==UNIPIPE) 
     {
         n = read(link->uniPipeInfo.fd[PIPEREAD], buffer, 1000);
 
-        if (n >= 0)
-        { 
+        /* parse data if anything was received */
+        if (n > 0)
+        {
             while (offset >= 0) 
             {
                 /* 
@@ -172,12 +171,12 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
                 pbuff[packetCount].valid=1;
                 pbuff[packetCount].new=1;
 
-                //increment number of packets collected
-                packetCount++; 
-
 
 printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
+printf("Link %d received\n",link->linkID);
 
+                //increment number of packets collected
+                packetCount++; 
 
                 //check for another packet
                 findWord(word, buffer, 7 + offset);
@@ -286,12 +285,11 @@ int linkSend(LinkInfo * link, packetBuffer pbuff[])
 
     appendWithSpace(sendbuff, newpayload);
 
-    if (link->linkType==UNIPIPE) 
+    if (link->linkType==UNIPIPE)
         write(link->uniPipeInfo.fd[PIPEWRITE],sendbuff,strlen(sendbuff)); 
 
     /* Used for DEBUG -- trace packets being sent */
     printf("Link %d transmitted\n",link->linkID);
-
     printf("linkSend: Contents of buffer: %s\n", pbuff->payload);
 }
 
