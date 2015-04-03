@@ -16,7 +16,8 @@ void netCloseConnections(manLinkArrayType *  manLinkArray, int hostid);
  * Set up the end nodes of the links -- essentially creating 
  * network topology
  */
-void netSetNetworkTopology(linkArrayType * linkArray);
+void netSetNetworkTopology(linkArrayType * linkArray, int source[], int dest[]);
+
 
 /* Find host's outgoing link and return its index from the link array */
 int netHostOutLink(linkArrayType * linkArray, int hostid); 
@@ -33,3 +34,9 @@ void netCloseLinks(linkArrayType * linkArray);
 /* Close the host's side of a connection between a host and manager */
 void netCloseManConnections(manLinkArrayType * manLinkArray);
 
+
+void netCloseSwitchOtherLinks(linkArrayType* linkArray, int switchId);
+
+void netSwitchLinks(linkArrayType* linkArray, switchState * sState, int switchId);
+
+void netCloseAllManLinks(manLinkArrayType* manLinkArray);
