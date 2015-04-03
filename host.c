@@ -405,7 +405,7 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
         return;
     }
 
-    length = fread(tempbuff, 1, PAYLOAD_LENGTH+1, fp);
+    length = fread(tempbuff, 1, 2000+1, fp);
 
     if (length==0) 
     {
@@ -610,19 +610,20 @@ void hostInitDataBuffer(dataBuffer * buff)
 
 void hostInitTransmit(hostState * hstate, char word[], char replymsg[]) 
 {
+    char dest[1000];
+    int dstaddr;
+
     if (hstate->sendDataBuff.busy == 1) 
     {
         strcpy(replymsg, "Already busy trasmitting.");
         return;
     }
+
     if (hstate->sendDataBuff.valid == 0)
     {
         strcpy(replymsg, "Invalid entry.");
         return;
     }
-
-    char dest[1000];
-    int  dstaddr;
 
     findWord(dest, word, 2);
     dstaddr = ascii2Int(dest);
