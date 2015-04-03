@@ -413,7 +413,7 @@ void hostUploadPacket(hostState * hstate, char fname[], char replymsg[])
         return;
     }
 
-    else if (length > PAYLOAD_LENGTH)
+    else if (length > 2000)
     {
         strcpy(replymsg, "Upload aborted: file is too big");
         return;

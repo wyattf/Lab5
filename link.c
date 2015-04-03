@@ -172,8 +172,8 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
                 pbuff[packetCount].new=1;
 
 
-printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
-printf("Link %d received\n",link->linkID);
+//printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
+//printf("Link %d received\n",link->linkID);
 
                 //increment number of packets collected
                 packetCount++; 
@@ -289,7 +289,7 @@ int linkSend(LinkInfo * link, packetBuffer pbuff[])
         write(link->uniPipeInfo.fd[PIPEWRITE],sendbuff,strlen(sendbuff)); 
 
     /* Used for DEBUG -- trace packets being sent */
-    printf("Link %d transmitted\n",link->linkID);
-    printf("linkSend: Contents of buffer: %s\n", pbuff->payload);
+//    printf("Link %d transmitted\n",link->linkID);
+//    printf("linkSend: Contents of buffer: %s\n", pbuff->payload);
 }
 
