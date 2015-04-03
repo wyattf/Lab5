@@ -242,7 +242,7 @@ void switchMain(switchState * sstate)
                     {
                         // Send on link if its not the incoming link
                         if(j != inLink)
-                            linkSend(&(sstate->outLinks[outLink]), &outPacket);
+                            linkSend(&(sstate->outLinks[j]), &outPacket);
                     }
                 }
             }

@@ -482,7 +482,7 @@ void hostDownloadPacket(hostState * hstate, char fname[], char replymsg[])
     fp = fopen(path,"wb"); 
 
     /* Download the packet buffer payload into the file */
-    if (hstate->rcvPacketBuff.new == 1) 
+    if (hstate->rcvflag == 1) 
     {
         fwrite(hstate->rcvDataBuff.data,1,hstate->rcvDataBuff.length,fp);
         memset(hstate->rcvDataBuff.data, 0, sizeof(hstate->sendDataBuff.data));
@@ -588,6 +588,7 @@ void hostInitState(hostState * hstate, int physid)
     hstate->netaddr = physid; /* default address */  
     hstate->nbraddr = EMPTY_ADDR;  
     hstate->rcvPacketBuff.valid = 0;
+    hstate->rcvflag = 0;
     hstate->rcvPacketBuff.new = 0;
     hostInitDataBuffer(&(hstate->sendDataBuff));
     hostInitDataBuffer(&(hstate->rcvDataBuff));
