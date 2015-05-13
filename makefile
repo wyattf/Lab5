@@ -37,4 +37,7 @@ testtable.o: testtable.c
 	gcc -c testtable.c
 
 clean:
+	rm -f *.o
+
+real_clean:
 	rm -f *.o net367 queue table
