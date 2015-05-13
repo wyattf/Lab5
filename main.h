@@ -10,6 +10,11 @@ typedef struct { /* Packet buffer */
    int new;     /* Indicates if the contents has been downloaded */
    int start;
    int end;
+
+   int type;
+   int root;
+   int child;
+   int distance;
 } packetBuffer;
 
 
