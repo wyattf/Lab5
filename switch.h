@@ -30,11 +30,15 @@ typedef struct {
     int physId;             // Physical ID
     int numInLinks;         // Number of incoming links
     int numOutLinks;        // Number of outgoing links
-    LinkInfo * inLinks;      // Incoming communication link
-    LinkInfo * outLinks;     // Outgoing communication link
+    LinkInfo * inLinks;     // Incoming communication link
+    LinkInfo * outLinks;    // Outgoing communication link
     Table forwardingTable;  // Forwarding table
     Queue packetQueue;      // Queue to hold packets
-    } switchState;
+    int root;               // Physical ID of root
+    int distance;           // Nearest distance to the root
+    int parent;             // Physical ID of parent node
+    int children[/*MAX NUMBER OF CHILDREN*/];      // Physical IDs of child nodes
+} switchState;
 
 
 /* Functions for queue */

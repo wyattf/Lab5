@@ -175,11 +175,20 @@ void tableDisplay(Table * ftable)
 // Initialize state of switch
 void switchInit(switchState * sstate, int physID)
 {
+    int i;
+
     sstate->physId = physID;
     sstate->numInLinks = 0;
     sstate->numOutLinks = 0;
     tableInit(&(sstate->forwardingTable));
     queueInit(&(sstate->packetQueue));
+
+    sstate->root = physID;
+    sstate->distance = INF;
+    for(i = 0; i < /*MAX # OF CHILDREN*/; i++)
+    {
+        sstate->children[i] = 0;
+    }
 }
 
 // Main loop for switch
@@ -193,6 +202,7 @@ void switchMain(switchState * sstate)
     int inLink;             // Link incoming packet arrived on
     packetBuffer outPacket;
     packetBuffer packets[10];
+    int count = 10;         // Count to send packets
 
     while(1)
     {
@@ -247,6 +257,18 @@ void switchMain(switchState * sstate)
                 }
             }
         }
+
+        // If count is 0
+        if(count == 0)
+        {
+            // Reset count to 10
+            count = 10;
+
+            // Send packet to all neighbor switches
+        }
+
+        // Update count
+        count--;
 
         // Sleep for 10 milliseconds
         usleep(TENMILLISEC);
