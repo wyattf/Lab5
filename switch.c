@@ -198,9 +198,8 @@ void switchInit(switchState * sstate, int physID)
 // Main loop for switch
 void switchMain(switchState * sstate)
 {
-    int l;                  // Counter for incoming links
-    int i;                  // Counter for packets
-    int j;                  // Counter for outgoing links
+    int i;                  // Counter
+    int j;                  // Counter
     int packetCount = 0;    // Number of packets on link
     int outLink;            // Link to transmit packet on
     int inLink;             // Link incoming packet arrived on
@@ -211,46 +210,46 @@ void switchMain(switchState * sstate)
     while(1)
     {
         // Check all incoming links for arriving packets
-        for(l=0; l<sstate->numInLinks; l++)
+        for(i=0; i<sstate->numInLinks; i++)
         {
             // Check link for packets
-            packetCount = linkReceive(&(sstate->inLinks[l]), packets);
+            packetCount = linkReceive(&(sstate->inLinks[i]), packets);
 
             // For all incoming packets on link
-            for(i=0;i<packetCount;i++)
+            for(j=0;j<packetCount;j++)
             {
-                if ( packets[i].type == STATEPACKET )
+                if ( packets[j].type == STATEPACKET )
                 {
 
-                    sstate->nodeLinks[l] = 0;
+                    sstate->nodeLinks[i] = 0;
 
-                        if ( sstate->root > packets[i].root )
+                        if ( sstate->root > packets[j].root )
                         {
-                            sstate->root = packets[i].root;
-                            sstate->parent = l;
+                            sstate->root = packets[j].root;
+                            sstate->parent = i;
                             sstate->distance = INFINITY;
                         }
 
-                        else if ( packets[i].distance + 1 < sstate->distance )
+                        else if ( packets[j].distance + 1 < sstate->distance )
                         {
-                            if ( packets[i].root <= sstate->root )
+                            if ( packets[j].root <= sstate->root )
                             {
-                                sstate->parent = l;
-                                sstate->distance = packets[i].distance + 1;
+                                sstate->parent = i;
+                                sstate->distance = packets[j].distance + 1;
                             }
                         }
 
-                        if ( packets[i].child )   sstate->child[l] = 1;
-                        else                    sstate->child[l] = 0;
+                        if ( packets[j].child )   sstate->child[i] = 1;
+                        else                    sstate->child[i] = 0;
                 }
 
                 else 
                 {
                     // Put in packet queue
-                    queueAppend(&(sstate->packetQueue), packets[i]);
+                    queueAppend(&(sstate->packetQueue), packets[j]);
 
                     // Update forwarding table
-                    tableUpdate(&(sstate->forwardingTable), packets[i].valid, packets[i].srcaddr, l);
+                    tableUpdate(&(sstate->forwardingTable), packets[j].valid, packets[j].srcaddr, i);
                 }
             }
         }
@@ -302,11 +301,11 @@ void switchMain(switchState * sstate)
                     inLink = tableGetOutLink(&(sstate->forwardingTable), outPacket.srcaddr);
 
                     // For all outgoing links
-                    for(j=0; j<sstate->numOutLinks; j++)
+                    for(i=0; i<sstate->numOutLinks; i++)
                     {
                         // Send on link if its not the incoming link
-                        if(j != inLink && (sstate->child[j] || sstate->parent == j || sstate->nodeLinks[j]))
-                            linkSend(&(sstate->outLinks[j]), &outPacket);
+                        if(i != inLink && (sstate->child[i] || sstate->parent == i || sstate->nodeLinks[i]))
+                            linkSend(&(sstate->outLinks[i]), &outPacket);
                     }
                 }
             }
