@@ -184,11 +184,14 @@ void switchInit(switchState * sstate, int physID)
     tableInit(&(sstate->forwardingTable));
     queueInit(&(sstate->packetQueue));
 
+    sstate->parent = physID;
     sstate->root = physID;
     sstate->distance = INFINITY;
+
     for(i = 0; i < MAXLINKS; i++)
     {
         sstate->child[i] = 0;
+        sstate->nodeLinks[i] = 1;
     }
 }
 
