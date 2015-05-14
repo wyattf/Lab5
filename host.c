@@ -574,7 +574,7 @@ void hostGetHostState(hostState * hstate, managerLink * manLink, char replymsg[]
         appendWithSpace(replymsg, word);
     }
 
-    int2Ascii(word, hstate->rcvPacketBuff.new);
+    int2Ascii(word, hstate->rcvflag);
     appendWithSpace(replymsg, word);
 
 }

@@ -192,8 +192,9 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
 
                     pbuff[packetCount].payload[k] = '\0';
 
-printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
-printf("Link %d received\n",link->linkID);
+//printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
+//printf("Link %d received\n",link->linkID);
+//printf("packet end flag:  %d", pbuff[packetCount].end);
                 }
 
                 pbuff[packetCount].valid=1;
