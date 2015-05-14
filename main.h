@@ -1,3 +1,5 @@
+#define STATEPACKET 3
+#define DATAPACKET 1
 
 #define PAYLOAD_LENGTH 200 /* Maximum payload size */
 

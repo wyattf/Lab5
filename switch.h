@@ -1,5 +1,7 @@
 #define MAXQUEUE 10000
 #define MAXTABLE 100
+#define MAXLINKS 10
+#define INFINITY 1000
 
 /* Data types for queue */
 typedef packetBuffer Element;
@@ -37,7 +39,8 @@ typedef struct {
     int root;               // Physical ID of root
     int distance;           // Nearest distance to the root
     int parent;             // Physical ID of parent node
-    int children[/*MAX NUMBER OF CHILDREN*/];      // Physical IDs of child nodes
+    int child[MAXLINKS];      
+    int nodeLinks[MAXLINKS];
 } switchState;
 
 

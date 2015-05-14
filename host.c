@@ -128,6 +128,7 @@ void hostTransmitPacket(hostState * hstate, char replymsg[])
     hstate->sendPacketBuff.length = length;
     hstate->sendPacketBuff.end = 0;
     hstate->sendPacketBuff.start = 0;
+    hstate->sendPacketBuff.type = DATAPACKET;
 
     /* raise the start flag if the current position is 0 */
     if (hstate->sendDataBuff.pos == 0)
@@ -262,7 +263,7 @@ void hostMain(hostState * hstate)
          */
         for (i = 0; i < packetCount; i++) 
         {
-            if (tmpbuff[i].dstaddr == hstate->netaddr && tmpbuff[i].valid == 1) 
+            if (tmpbuff[i].dstaddr == hstate->netaddr && tmpbuff[i].valid == 1 && tmpbuff[i].type == DATAPACKET) 
             {
                 /* clear old data and reinitialize values if the start of a new packet is read */
                 if (tmpbuff[i].start == 1) 

@@ -131,43 +131,68 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
 
                 buffer[n] = '\0';
 
-                findWord(word, buffer, 1 + offset); /* Destination address */
-                pbuff[packetCount].dstaddr = ascii2Int(word);
 
-                findWord(word, buffer, 2 + offset); /* Source address */
-                pbuff[packetCount].srcaddr = ascii2Int(word);
+                findWord(word, buffer, 1 + offset); /* Packet type*/
+                pbuff[packetCount].type = ascii2Int(word);
 
-                findWord(word, buffer, 3 + offset); /* Length */
-                pbuff[packetCount].length = ascii2Int(word);
-
-                findWord(word, buffer, 4 + offset); /* data start flag */
-                pbuff[packetCount].end = ascii2Int(word);
-
-                findWord(word, buffer, 5 + offset); /* data end flag */
-                pbuff[packetCount].start = ascii2Int(word);
-
-                findWord(word, buffer, 6 + offset); /* Payload */
-
-                /* 
-                 * We will transform the payload so that 
-                 *
-                 *  Each symbol 'a', 'b', ..., 'p' converts to the 
-                 *  4-bits 0000, 0001,..., 1111
-                 *  Each pair of symbols converts to a byte.
-                 *  For example, 'ac' converts to 00000010
-                 *  Note the first symbol is the high order bits
-                 *  and the second symbol is the low order bits
-                 */
-
-                for (k = 0; k < pbuff[packetCount].length; k++)
+                if ( pbuff[packetCount].type == STATEPACKET )
                 {
-                    highbits = word[2*k]-'a';  
-                    lowbits = word[2*k+1]-'a';
-                    highbits = highbits * 16; /* Shift to the left by 4 bits */
-                    pbuff[packetCount].payload[k] = highbits + lowbits;
-                } /* end of for */
+                    findWord(word, buffer, 2 + offset); /* Length */
+                    pbuff[packetCount].length = ascii2Int(word);
 
-                pbuff[packetCount].payload[k] = '\0';
+                    findWord(word, buffer, 3 + offset); /* Root */
+                    pbuff[packetCount].root = ascii2Int(word);
+
+                    findWord(word, buffer, 4 + offset); /* Distance */
+                    pbuff[packetCount].distance = ascii2Int(word);
+
+                    findWord(word, buffer, 5 + offset); /* Child */
+                    pbuff[packetCount].child = ascii2Int(word);
+                }
+
+
+                else if ( pbuff[packetCount].type == DATAPACKET )
+                {
+
+                    findWord(word, buffer, 2 + offset); /* Destination address */
+                    pbuff[packetCount].dstaddr = ascii2Int(word);
+
+                    findWord(word, buffer, 3 + offset); /* Source address */
+                    pbuff[packetCount].srcaddr = ascii2Int(word);
+
+                    findWord(word, buffer, 4 + offset); /* Length */
+                    pbuff[packetCount].length = ascii2Int(word);
+
+                    findWord(word, buffer, 5 + offset); /* data start flag */
+                    pbuff[packetCount].end = ascii2Int(word);
+
+                    findWord(word, buffer, 6 + offset); /* data end flag */
+                    pbuff[packetCount].start = ascii2Int(word);
+
+                    findWord(word, buffer, 7 + offset); /* Payload */
+
+                    /* 
+                     * We will transform the payload so that 
+                     *
+                     *  Each symbol 'a', 'b', ..., 'p' converts to the 
+                     *  4-bits 0000, 0001,..., 1111
+                     *  Each pair of symbols converts to a byte.
+                     *  For example, 'ac' converts to 00000010
+                     *  Note the first symbol is the high order bits
+                     *  and the second symbol is the low order bits
+                     */
+
+                    for (k = 0; k < pbuff[packetCount].length; k++)
+                    {
+                        highbits = word[2*k]-'a';  
+                        lowbits = word[2*k+1]-'a';
+                        highbits = highbits * 16; /* Shift to the left by 4 bits */
+                        pbuff[packetCount].payload[k] = highbits + lowbits;
+                    } /* end of for */
+
+                    pbuff[packetCount].payload[k] = '\0';
+                }
+
                 pbuff[packetCount].valid=1;
                 pbuff[packetCount].new=1;
 
@@ -179,18 +204,11 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
                 packetCount++; 
 
                 //check for another packet
-                findWord(word, buffer, 7 + offset);
+                findWord(word, buffer, 8 + offset);
 
                 //if there is a new packet, update the offset
-                if (word[0] != '\0') 
-                {
-                    offset = offset + 6;
-                } 
-
-                else
-                {
-                    offset = -1;
-                }
+                if (word[0] != '\0') offset +=7;
+                else  offset = -1;
             }
         } 
 
@@ -241,55 +259,87 @@ int linkSend(LinkInfo * link, packetBuffer pbuff[])
     sendbuff[0] = ' ';  /* Start message with a space */
     sendbuff[1] = '\0';
 
-    int2Ascii(word, pbuff->dstaddr);  /* Append destination address */
-    appendWithSpace(sendbuff, word);
-
-    int2Ascii(word, pbuff->srcaddr);  /* Append source address */
-    appendWithSpace(sendbuff, word);
-
-    int2Ascii(word, pbuff->length);  /* Append payload length */
-    appendWithSpace(sendbuff, word);
-
-    int2Ascii(word, pbuff->end);     /* Append end flag */
-    appendWithSpace(sendbuff, word);
-
-    int2Ascii(word, pbuff->start);   /* Append start flag */
-    appendWithSpace(sendbuff, word);
-
-
-    /* 
-     * We will transform the payload so that 
-     * a byte will be converted into two
-     * ASCII symbols, each symbol represents
-     * four bits. The ASCII symbols are 
-     * 'a', 'b', ..., 'p' representing
-     * 0000, 0001, 0010, ..., 1111  
-     * For example, the byte 00000010 will
-     * be represented by 'ab'.  Note that
-     * the first byte is the high order bits
-     * and the second byte is the low order bits.
-     */
-
-    for (k = 0; k < pbuff->length; k++) 
+    if ( pbuff->type == STATEPACKET )
     {
-        lowbits = pbuff->payload[k];
-        highbits = lowbits;
-        highbits = highbits/16; /* shift bits down by four bits */
-        highbits = highbits & 15; /* Mask out all bits except the last four */
-        lowbits = lowbits & 15;
-        newpayload[2*k] = highbits + 'a';
-        newpayload[2*k+1] = lowbits + 'a'; 
+        int2Ascii(word, pbuff->type);  /* Append packet type */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->length);  /* Append packet length */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->root);  /* Append root */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->distance);  /* Append distnace */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->child);  /* Append child */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, 0);  /* Append packet type */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, 0);  /* Append packet type */
+        appendWithSpace(sendbuff, word);
+
+//printf("linkSend: Contents of buffer: %s\n", sendbuff);
     }
 
-    newpayload[2*k] = '\0';
+    else if ( pbuff->type == DATAPACKET )
+    {
+        int2Ascii(word, pbuff->type);  /* Append packet type */
+        appendWithSpace(sendbuff, word);
 
-    appendWithSpace(sendbuff, newpayload);
+        int2Ascii(word, pbuff->dstaddr);  /* Append destination address */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->srcaddr);  /* Append source address */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->length);  /* Append payload length */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->end);     /* Append end flag */
+        appendWithSpace(sendbuff, word);
+
+        int2Ascii(word, pbuff->start);   /* Append start flag */
+        appendWithSpace(sendbuff, word);
+
+
+        /* 
+         * We will transform the payload so that 
+         * a byte will be converted into two
+         * ASCII symbols, each symbol represents
+         * four bits. The ASCII symbols are 
+         * 'a', 'b', ..., 'p' representing
+         * 0000, 0001, 0010, ..., 1111  
+         * For example, the byte 00000010 will
+         * be represented by 'ab'.  Note that
+         * the first byte is the high order bits
+         * and the second byte is the low order bits.
+         */
+
+        for (k = 0; k < pbuff->length; k++) 
+        {
+            lowbits = pbuff->payload[k];
+            highbits = lowbits;
+            highbits = highbits/16; /* shift bits down by four bits */
+            highbits = highbits & 15; /* Mask out all bits except the last four */
+            lowbits = lowbits & 15;
+            newpayload[2*k] = highbits + 'a';
+            newpayload[2*k+1] = lowbits + 'a'; 
+        }
+
+        newpayload[2*k] = '\0';
+        appendWithSpace(sendbuff, newpayload);
+
+//printf("linkSend: Contents of buffer: %s\n", pbuff->payload);
+    }
 
     if (link->linkType==UNIPIPE)
         write(link->uniPipeInfo.fd[PIPEWRITE],sendbuff,strlen(sendbuff)); 
 
     /* Used for DEBUG -- trace packets being sent */
-//    printf("Link %d transmitted\n",link->linkID);
-//    printf("linkSend: Contents of buffer: %s\n", pbuff->payload);
+//printf("Link %d transmitted\n",link->linkID);
 }
 

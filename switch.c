@@ -9,6 +9,7 @@
 #include "link.h"
 #include "switch.h"
 
+
 #define TENMILLISEC 10000
 
 /***************************/
@@ -128,7 +129,7 @@ void tableUpdateEntry(Table * ftable, int i, int valid, int linkOut)
 void tableUpdate(Table * ftable, int valid, int dstaddr, int linkOut)
 {
     int i;
-    
+
     i = tableEntryIndex(ftable, dstaddr);
 
     if(i == -1)
@@ -184,10 +185,10 @@ void switchInit(switchState * sstate, int physID)
     queueInit(&(sstate->packetQueue));
 
     sstate->root = physID;
-    sstate->distance = INF;
-    for(i = 0; i < /*MAX # OF CHILDREN*/; i++)
+    sstate->distance = INFINITY;
+    for(i = 0; i < MAXLINKS; i++)
     {
-        sstate->children[i] = 0;
+        sstate->child[i] = 0;
     }
 }
 
@@ -215,16 +216,66 @@ void switchMain(switchState * sstate)
             // For all incoming packets on link
             for(i=0;i<packetCount;i++)
             {
-                // Put in packet queue
-                queueAppend(&(sstate->packetQueue), packets[i]);
+                if ( packets[i].type == STATEPACKET )
+                {
 
-                // Update forwarding table
-                tableUpdate(&(sstate->forwardingTable), packets[i].valid, packets[i].srcaddr, l);
+                    sstate->nodeLinks[l] = 0;
+
+                        if ( sstate->root > packets[i].root )
+                        {
+                            sstate->root = packets[i].root;
+                            sstate->parent = l;
+                            sstate->distance = INFINITY;
+                        }
+
+                        else if ( packets[i].distance + 1 < sstate->distance )
+                        {
+                            if ( packets[i].root <= sstate->root )
+                            {
+                                sstate->parent = l;
+                                sstate->distance = packets[i].distance + 1;
+                            }
+                        }
+
+                        if ( packets[i].child )   sstate->child[l] = 1;
+                        else                    sstate->child[l] = 0;
+                }
+
+                else 
+                {
+                    // Put in packet queue
+                    queueAppend(&(sstate->packetQueue), packets[i]);
+
+                    // Update forwarding table
+                    tableUpdate(&(sstate->forwardingTable), packets[i].valid, packets[i].srcaddr, l);
+                }
             }
         }
 
+        // If count is 0
+        if(count == 0)
+        {
+            // Reset count to 10
+            count = 10;
+
+            outPacket.type = STATEPACKET;
+            outPacket.valid = 1;
+            outPacket.length = sstate->physId;
+            outPacket.distance= sstate->distance;
+            outPacket.root = sstate->root;
+
+            // Send packet to all neighbor switches
+            for (i=0; i<sstate->numOutLinks; i++)
+            {
+                if (sstate->parent == i)    outPacket.child = 1;
+                else                        outPacket.child = 0;
+                linkSend(&(sstate->outLinks[i]), &outPacket);
+            }
+        }
+
+
         // If queue is not empty, transmit a packet
-        if(sstate->packetQueue.size != 0)
+        else if(sstate->packetQueue.size != 0)
         {
             // Get packet from head of packet Queue
             outPacket = queueServe(&(sstate->packetQueue));
@@ -251,20 +302,11 @@ void switchMain(switchState * sstate)
                     for(j=0; j<sstate->numOutLinks; j++)
                     {
                         // Send on link if its not the incoming link
-                        if(j != inLink)
+                        if(j != inLink && (sstate->child[i] || sstate->parent == i || sstate->nodeLinks[i]))
                             linkSend(&(sstate->outLinks[j]), &outPacket);
                     }
                 }
             }
-        }
-
-        // If count is 0
-        if(count == 0)
-        {
-            // Reset count to 10
-            count = 10;
-
-            // Send packet to all neighbor switches
         }
 
         // Update count
