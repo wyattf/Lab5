@@ -191,14 +191,13 @@ int linkReceive(LinkInfo * link, packetBuffer pbuff[])
                     } /* end of for */
 
                     pbuff[packetCount].payload[k] = '\0';
+
+printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
+printf("Link %d received\n",link->linkID);
                 }
 
                 pbuff[packetCount].valid=1;
                 pbuff[packetCount].new=1;
-
-
-//printf("linkReceive: Contents of buffer: %s", pbuff[packetCount].payload);
-//printf("Link %d received\n",link->linkID);
 
                 //increment number of packets collected
                 packetCount++; 

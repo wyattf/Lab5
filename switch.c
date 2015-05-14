@@ -302,7 +302,7 @@ void switchMain(switchState * sstate)
                     for(j=0; j<sstate->numOutLinks; j++)
                     {
                         // Send on link if its not the incoming link
-                        if(j != inLink && (sstate->child[i] || sstate->parent == i || sstate->nodeLinks[i]))
+                        if(j != inLink && (sstate->child[j] || sstate->parent == j || sstate->nodeLinks[j]))
                             linkSend(&(sstate->outLinks[j]), &outPacket);
                     }
                 }
